@@ -1,0 +1,9 @@
+<component name="libraryTable">
+  <library name="SBT: com.github.dunnololda:natives-linux-xinitthreads:1.0:natives-linux-xinitthreads:jar">
+    <CLASSES>
+      <root url="jar://$USER_HOME$/.ivy2/cache/com.github.dunnololda/natives-linux-xinitthreads/jars/natives-linux-xinitthreads-1.0-natives-linux-xinitthreads.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
