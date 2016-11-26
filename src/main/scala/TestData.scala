@@ -1,7 +1,6 @@
 
 import akka.actor.ActorRef
-import com.sunway.network.actors.ActorMessages.{ServerReply, _}
-
+import com.sunway.network.actors.MenuActorMessages.{ServerReply, _}
 /**
   * Created by Mr_RexZ on 11/23/2016.
   */
@@ -9,7 +8,27 @@ object TestData extends App {
 
 
   var actor: List[Option[ActorRef]] = List(None)
-  var a: ServerReply = AcceptPlayerAsHost(1, 1, actor)
+  var a: ServerReply = new AcceptPlayerAsHost(1, 1, actor)
+
+  var c = a.asInstanceOf[AcceptPlayerAsHost]
+  println(c.isInstanceOf[ServerReply])
+  cast(a)
+
+  def cast[A](a: A) = {
+
+    println(a.isInstanceOf[ServerReply])
+    println(a.isInstanceOf[AcceptPlayerAsHost])
+    println(a.isInstanceOf[AcceptPlayerAsParticipant])
+    println(a.isInstanceOf[RejectPlayer])
+    val b = a.asInstanceOf[AcceptPlayerAsHost]
+    println(b.isInstanceOf[ServerReply])
+    println(b.isInstanceOf[AcceptPlayerAsHost])
+    println(b.isInstanceOf[AcceptPlayerAsParticipant])
+    println(b.isInstanceOf[RejectPlayer])
+  }
+
+
+
 
   /*
    // cast(a)
@@ -25,15 +44,7 @@ object TestData extends App {
     }
   */
 
-  /*
-  def checkType[T : TypeTag](obj: T) = {
-    val theType = typeOf[T] match {
-      case TypeRef(_, _, args) => args
-    }
-    println(theType)
 
-  }
-*/
 
   /*
   def cast[A](a : A)(implicit tt: TypeTag[A])=  {
@@ -49,4 +60,6 @@ object TestData extends App {
 
   }
   */
+
+
 }

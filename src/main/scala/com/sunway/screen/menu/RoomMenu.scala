@@ -1,7 +1,11 @@
 package com.sunway.screen.menu
 
 import com.github.dunnololda.scage.ScageLib._
+import com.sunway.model.User
 import com.sunway.model.User._
+import com.sunway.network.Client
+import com.sunway.network.actors.MenuActorMessages.SendRoomState
+import com.sunway.screen.gamescreen.MainGame
 import com.sunway.util.Render._
 import com.sunway.util.{ImmutableMessage, Message, MutableMessage}
 
@@ -10,7 +14,6 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 /**
   * Created by Mr_RexZ on 11/17/2016.
   */
-
 
 //TODO Player reference not assigned yet when player first time joining
 object RoomMenu extends ScageScreen("AnotherApp") {
@@ -28,8 +31,9 @@ object RoomMenu extends ScageScreen("AnotherApp") {
     SubmitBox,
     CancelBox)
   init {
-    stringList.++=(initPlayerName)
-    stringList.++=(initPrefixTexts)
+
+    stringList.++=(initMutableTexts)
+    // stringList.++=(initPrefixTexts)
   }
 
   render {
@@ -52,6 +56,10 @@ object RoomMenu extends ScageScreen("AnotherApp") {
           println("You pressed submit!")
         }
         else if (box.eq(CancelBox)) {
+          Client.clientSystem.stop(Client.clientActor)
+          Client.createClientActor
+
+          // Client.clientActor ! RestartActor
           stop()
           println("You pressed cancel!")
         }
@@ -60,23 +68,40 @@ object RoomMenu extends ScageScreen("AnotherApp") {
 
     }
 
-
     def withinX(p: DynaBox): Boolean = (m.x < p.coord.x + p.box_width - p.box_width / 2) && (m.x > p.coord.x - p.box_width / 2)
     def withinY(p: DynaBox): Boolean = m.y < p.coord.y + p.box_height - p.box_height / 2 && m.y > p.coord.y - p.box_height / 2
 
   }
+
+
+    key(KEY_R, onKeyDown = {
+      Client.actorServerSelect ! SendRoomState(Client.clientActor, targetRoomNum.string.toInt, myRoomPos.string.toInt, User.READY_STATE, " - READY")
+    })
+    key(KEY_W, onKeyDown = {
+      Client.actorServerSelect ! SendRoomState(Client.clientActor, targetRoomNum.string.toInt, myRoomPos.string.toInt, User.WAITING_STATE, " - WAITING")
+    })
+
+
+    action(1000) {
+      if (User.gameState == READY_STATE) {
+        MainGame.run()
+      }
+    }
+
     //RoomMenu.stop
   })
 
-  def initPlayerName: ListBuffer[Message] = {
+  def initMutableTexts: ListBuffer[Message] = {
 
-    val playerNamesWithPos = ListBuffer[Message]()
+    val mutableTexts = ListBuffer[Message]()
     val playerTextPosition: List[Vec] = List(Vec(220, 320), Vec(220, 300), Vec(220, 280), Vec(220, 260))
+    val playerStatsTextPosition: List[Vec] = List(Vec(100, 320), Vec(100, 300), Vec(100, 280), Vec(100, 260))
     for (pos <- 0 until maxPlayerInRoom) {
-      playerNamesWithPos += MutableMessage(playerNames(pos), playerTextPosition(pos))
+      mutableTexts += MutableMessage(playerNames(pos), playerTextPosition(pos))
+      mutableTexts += MutableMessage(playerRoomStats(pos), playerStatsTextPosition(pos))
     }
 
-    return playerNamesWithPos
+    return mutableTexts
   }
 
   def initPrefixTexts: ListBuffer[Message] = {

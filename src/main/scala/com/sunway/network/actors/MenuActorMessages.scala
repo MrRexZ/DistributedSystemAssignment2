@@ -7,7 +7,7 @@ import scala.collection.mutable.ListBuffer
 /**
   * Created by Mr_RexZ on 11/18/2016.
   */
-object ActorMessages {
+object MenuActorMessages {
 
 
   //DON'T CHANGE THE HEARTBEATID!!!
@@ -34,6 +34,10 @@ object ActorMessages {
 
   case class AskIfAssignedWithRoom()
 
+  case class SendRoomState(clientRef: ActorRef, roomNum: Int, roomPos: Int, playerRoomState: Int, text: String)
+
+  case class UpdatePlayerTextState(roomPos: Int, targetName: String, text: String)
+
 
   case class SendRequestJoin(actorRef: ActorRef, roomNum: Int, userName: String, password: String)
 
@@ -44,6 +48,10 @@ object ActorMessages {
   case class AskNumOfParticipants(roomNum: Int, clientRef: ActorRef)
 
   case class BeAskedUsername()
+
+  case class BeAskedStats(roomPos: Int)
+
+  case class RestartActor()
 
 
   case class UpdateRoomServerList(roomNum: Int, newRoomList: ListBuffer[Option[ActorRef]])
@@ -59,5 +67,7 @@ object ActorMessages {
   case class FrequencyChangeMessage(interval: Int, clientActors: ListBuffer[Option[ActorRef]])
 
   case class UpdateClientsList(newList: ListBuffer[Option[ActorRef]])
+
+  case class StartGame(membersRoomList: ListBuffer[Option[ActorRef]])
 
 }

@@ -7,7 +7,7 @@ import akka.util.Timeout
 import com.github.dunnololda.scage.ScageLib._
 import com.sunway.model.User._
 import com.sunway.network.Client
-import com.sunway.network.actors.ActorMessages._
+import com.sunway.network.actors.MenuActorMessages._
 import com.sunway.util.{ImmutableMessage, Message, MutableMessage}
 
 import scala.collection.mutable.ListBuffer
@@ -55,6 +55,7 @@ object MainMenu extends ScageScreen("Scage App") {
     connectAsParticipant
   })
 
+
   def renderTextFunctions {
     render {
       openglMove(windowSize / 2)
@@ -63,25 +64,20 @@ object MainMenu extends ScageScreen("Scage App") {
   }
 
   def connectAsHost {
+
     val hostFuture = (Client.actorServerSelect ? SendRequestCreateRoom(Client.clientActor, myName.string, myPassword.string))
     val serverReply = Await.result(hostFuture, 3 seconds).asInstanceOf[ServerReply]
     checkType(AcceptPlayerAsHost, serverReply)
 
   }
 
-  def connectAsParticipant {
-    val participantFuture = Client.actorServerSelect ? SendRequestJoin(Client.clientActor, targetRoomNum.string.toInt, myName.string, myPassword.string)
-    val serverReply = Await.result(participantFuture, 3 seconds).asInstanceOf[ServerReply]
-    checkType(AcceptPlayerAsParticipant, serverReply)
-
-  }
-
-
   //TODO Optimize this part!!
   def checkType[T: TypeTag](obj: T, serverReply: ServerReply) = {
 
+
     if (serverReply.isInstanceOf[RejectPlayer]) println(serverReply.asInstanceOf[RejectPlayer].reason)
     else {
+
       if (serverReply.isInstanceOf[AcceptPlayerAsHost]) Client.clientActor ! serverReply.asInstanceOf[AcceptPlayerAsHost]
       else if (serverReply.isInstanceOf[AcceptPlayerAsParticipant]) Client.clientActor ! serverReply.asInstanceOf[AcceptPlayerAsParticipant]
 
@@ -89,6 +85,13 @@ object MainMenu extends ScageScreen("Scage App") {
 
     }
 
+
+  }
+
+  def connectAsParticipant {
+    val participantFuture = Client.actorServerSelect ? SendRequestJoin(Client.clientActor, targetRoomNum.string.toInt, myName.string, myPassword.string)
+    val serverReply = Await.result(participantFuture, 3 seconds).asInstanceOf[ServerReply]
+    checkType(AcceptPlayerAsParticipant, serverReply)
 
   }
 
