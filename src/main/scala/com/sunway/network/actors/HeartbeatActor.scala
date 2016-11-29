@@ -1,7 +1,6 @@
 package com.sunway.network.actors
 
 import akka.actor.{Actor, ActorIdentity, ActorRef, Cancellable, Identify, Props}
-import com.sunway.model.Database
 import com.sunway.model.User._
 import com.sunway.network.actors.MenuActorMessages.{FrequencyChangeMessage, HeartbeatMessage, StartMessage, _}
 
@@ -33,7 +32,7 @@ class HeartbeatActor(roomNum: Int, interval: Int, clientActors: ListBuffer[Optio
 
 
     case ActorIdentity(playerID, Some(actorRef)) => {
-      println("AFTER UPDATE : " + Database.roomActorRefPair)
+      //  println("AFTER UPDATE : " + Database.roomActorRefPair)
     }
 
 

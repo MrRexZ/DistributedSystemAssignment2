@@ -21,6 +21,9 @@ object MenuActorMessages {
   val GET_REF_SERVER = 4
   val GET_REF_CLIENT = 5
 
+  val OK_REJECTED = 0
+  val OK_RECEIVED = 1
+  val NOT_OK = 2
 
   trait ServerReply
 
@@ -51,10 +54,18 @@ object MenuActorMessages {
 
   case class BeAskedStats(roomPos: Int)
 
+  case class BeAskedRoomState(playerPos: Int)
+
+  case class BeAskedMapState()
+
+  case class BeAskedPlay()
+
   case class RestartActor()
 
+  case class AllPlayerReceivedMap(roomNum: Int)
 
-  case class UpdateRoomServerList(roomNum: Int, newRoomList: ListBuffer[Option[ActorRef]])
+  case class BeAskedRoomIsPlaying(roomNum: Int)
+
 
   case class StartMessage()
 

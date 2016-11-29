@@ -7,14 +7,14 @@ import com.sunway.model.User._
 import com.sunway.network.actors.MenuActorMessages.{BeAskedStats, BeAskedUsername}
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
+import scala.concurrent._
 import scala.concurrent.duration._
 
 /**
   * Created by Mr_RexZ on 11/25/2016.
   */
 object ActorsUtil {
-  def updateMembersList(newMembersList: List[Option[ActorRef]]): Unit = {
+  def updateMembersNameList(newMembersList: List[Option[ActorRef]]): Unit = {
     implicit val timeout = Timeout(5 seconds)
     for (index <- 0 until newMembersList.size) {
       if (!newMembersList(index).isEmpty) {
@@ -37,4 +37,6 @@ object ActorsUtil {
       }
     }
   }
+
+
 }

@@ -13,7 +13,8 @@ object Database {
 
   //TODO change ActorRef to ActorSelection
   val roomActorRefPair = mutable.Map[Int, ListBuffer[Option[ActorRef]]]()
-  val clientRoomState = Map[ActorRef, Int]()
+  val clientRoomState = Map[Int, ListBuffer[Int]]()
+  val roomIsPlaying = Map[Int, Boolean]()
 
 
   //TODO Create an authentication system later on to validate username.

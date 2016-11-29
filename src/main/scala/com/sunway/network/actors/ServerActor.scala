@@ -4,8 +4,10 @@ package com.sunway.network.actors
 import akka.actor.{Actor, ActorRef}
 import akka.pattern.ask
 import akka.util.Timeout
+import com.github.dunnololda.scage.support.Vec
 import com.sunway.model.Database._
 import com.sunway.model.User._
+import com.sunway.model.{ConfigurationObject, LevelGenerator}
 import com.sunway.network.Server._
 import com.sunway.network.actors.GameplayActorMessages.DistributeMessageToAllClients
 import com.sunway.network.actors.MenuActorMessages._
@@ -14,7 +16,7 @@ import scala.collection.mutable.ListBuffer
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.Future
 import scala.concurrent.duration._
-import scala.util.Random
+import scala.util.{Failure, Random, Success}
 /**
   * Created by Mr_RexZ on 11/18/2016.
   */
@@ -47,7 +49,7 @@ class ServerActor extends Actor {
       def registerRoom(roomNum: Int, clientRef: ActorRef) {
         roomNumList += roomNum
         roomActorRefPair.put(roomNum, ListBuffer(Some(actorRef), None))
-        clientRoomState.put(clientRef, WAITING_STATE)
+        clientRoomState.put(roomNum, ListBuffer(WAITING_STATE, WAITING_STATE))
       }
 
     }
@@ -65,9 +67,9 @@ class ServerActor extends Actor {
 
             val currentRoomMembers = getRoomMembers(roomNum)
 
-            updateClientAndHeartbeat(currentRoomMembers, actorRef, roomNum)
+            updateClientsList(currentRoomMembers, actorRef)
             heartBeatActorRef.get(roomNum).get ! HeartbeatMessage(myRoomPos)
-            clientRoomState.put(actorRef, WAITING_STATE)
+            clientRoomState(roomNum).update(myRoomPos, WAITING_STATE)
             sender ! AcceptPlayerAsParticipant(roomNum, myRoomPos, currentRoomMembers)
 
           }
@@ -75,16 +77,13 @@ class ServerActor extends Actor {
         }
       }
     }
-    case UpdateRoomServerList(roomNum, newListActors) => {
-      updateRoomServerList(roomNum, newListActors)
-    }
 
     case AskNumOfParticipants(roomNum, clientRef) => {
       sender ! containsClient(roomNum, clientRef)
     }
 
     case SendRoomState(clientRef: ActorRef, roomNum: Int, roomPos: Int, playerRoomState: Int, text: String) => {
-      clientRoomState.update(clientRef, playerRoomState)
+      clientRoomState(roomNum).update(roomPos, playerRoomState)
       implicit val timeout = Timeout(5.seconds)
       val askTargetName: Future[String] = (clientRef ? BeAskedUsername).mapTo[String]
 
@@ -95,17 +94,23 @@ class ServerActor extends Actor {
             client.get ! UpdatePlayerTextState(roomPos, targetName, text)
           }
         }
-
       }
 
+      println("all members ready " + allMembersReady)
       //TODO WARNING HERE, DOES THE CLASS CORRECTLY DETECT THE MESSAGE?
-      if (allMembersReady) sendMessageToAllMembers(StartGame(roomActorRefPair(roomNum)), roomNum)
+      if (allMembersReady) {
+        roomIsPlaying.put(roomNum, true)
+        sendMessageToAllMembers(StartGame(roomActorRefPair(roomNum)), roomNum)
+        val levelObject = new LevelGenerator(roomNum, roomActorRefPair(roomNum))
+        levelObject.genLevel(Vec(0, ConfigurationObject.windowHeight / 2 - 100), 0, 1000)
+        levelObject.sendGeneratedMap()
+      }
 
       def allMembersReady: Boolean = {
-        for (client <- roomActorRefPair(roomNum)) {
+        for ((client, index) <- roomActorRefPair(roomNum).zipWithIndex) {
           if (client.isEmpty) return false
           else {
-            if (clientRoomState.get(client.get).get == WAITING_STATE) return false
+            if (clientRoomState.get(roomNum).get(index) == WAITING_STATE) return false
           }
         }
         true
@@ -113,13 +118,40 @@ class ServerActor extends Actor {
     }
 
 
+    case BeAskedRoomIsPlaying(roomNum) => sender ! roomIsPlaying(roomNum)
 
     //TODO remove this on the win events
     case DistributeMessageToAllClients(message, roomNum) => {
       sendMessageToAllMembers(message, roomNum)
     }
 
+
+    case AllPlayerReceivedMap(roomNum) => {
+      val tempMapState = Array.fill[Int](maxPlayerInRoom)(WAITING_STATE)
+      val tempClientsList = roomActorRefPair(roomNum)
+      for ((clientRefOpt, i) <- roomActorRefPair(roomNum).zipWithIndex) {
+        (clientRefOpt.get ? BeAskedMapState).mapTo[Int].onComplete {
+          case Success(state) => {
+            tempMapState(i) = state
+            if (allMapReadyState(tempMapState)) {
+              for (clientRef <- tempClientsList) {
+                clientRef.get ! BeAskedPlay
+              }
+            }
+          }
+          case Failure(fail) => println("Failed in asking player map state")
+        }
+      }
+    }
   }
+
+  def allMapReadyState(tempMapState: Array[Int]): Boolean = {
+    for (state <- tempMapState) {
+      if (state == WAITING_STATE) return false
+    }
+    return true
+  }
+
 
   def containsRoom(roomNum: Int): Boolean = roomNumList.contains(roomNum.toInt)
 
@@ -128,16 +160,11 @@ class ServerActor extends Actor {
   }
 
   def checkRoomEmptySlot(roomNum: Int, actorRef: ActorRef): Option[Int] = {
-    // val roomPlayerListImmutable : java.util.List[Option[ActorRef]] = roomToActorRefPair.get(roomNum.toString)
-    //   var roomPlayerList = roomPlayerListImmutable.toArray(new Array[Option[ActorRef]](roomPlayerListImmutable.size()))
 
     val roomPlayerList = roomActorRefPair.get(roomNum).get
     var counter = 0;
     for (playerSlot <- roomPlayerList) {
       if (playerSlot.isEmpty) {
-
-        //   val newList = updatedRoomActorRef(roomNum, counter, Some(actorRef))
-        //   roomActorRefPair.update(roomNum,newList)
 
         roomActorRefPair(roomNum).update(counter, Some(actorRef))
         println("Current ListBuffer state : " + roomActorRefPair.get(roomNum).get)
@@ -156,21 +183,8 @@ class ServerActor extends Actor {
     else sender ! RejectPlayer(" you didn't insert a password")
   }
 
-  def updateRoomServerList(roomNum: Int, newRoomList: ListBuffer[Option[ActorRef]]) = {
-    // roomActorRefPair.update(roomNum, newRoomList)
-  }
-
-  def updateClientAndHeartbeat(currentRoomMembers: List[Option[ActorRef]], joiningClient: ActorRef, roomNum: Int) = {
-
-    updateClientsList(currentRoomMembers, joiningClient)
-    //   updateHeartbeatList(currentRoomMembers, roomNum)
-  }
 
   def updateClientsList(currentRoomMembers: List[Option[ActorRef]], joiningClient: ActorRef) = {
-    sendClientsUpdatedWaitingList(currentRoomMembers, joiningClient)
-  }
-
-  def sendClientsUpdatedWaitingList(currentRoomMembers: List[Option[ActorRef]], joiningClient: ActorRef) = {
     for (otherClients <- currentRoomMembers
          if (!otherClients.isEmpty && !otherClients.get.equals(joiningClient))) {
       otherClients.get ! UpdateClientsList(currentRoomMembers.to[ListBuffer])
@@ -195,9 +209,6 @@ class ServerActor extends Actor {
     }
   }
 
-  def updateHeartbeatList(currentRoomMembers: List[Option[ActorRef]], roomNum: Int) = {
-    heartBeatActorRef.get(roomNum).get ! UpdateClientsList(currentRoomMembers.to[ListBuffer])
-  }
 
   def generateRoomNum(): Int = {
     var genRoom: Int = Random.nextInt(1000)

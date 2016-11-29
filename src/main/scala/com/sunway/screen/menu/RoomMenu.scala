@@ -11,6 +11,7 @@ import com.sunway.util.{ImmutableMessage, Message, MutableMessage}
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
+
 /**
   * Created by Mr_RexZ on 11/17/2016.
   */
@@ -75,6 +76,7 @@ object RoomMenu extends ScageScreen("AnotherApp") {
 
 
     key(KEY_R, onKeyDown = {
+      println("YOU PRESSED R")
       Client.actorServerSelect ! SendRoomState(Client.clientActor, targetRoomNum.string.toInt, myRoomPos.string.toInt, User.READY_STATE, " - READY")
     })
     key(KEY_W, onKeyDown = {
@@ -82,13 +84,11 @@ object RoomMenu extends ScageScreen("AnotherApp") {
     })
 
 
-    action(1000) {
-      if (User.gameState == READY_STATE) {
-        MainGame.run()
-      }
+    action {
+      if (User.readyPlay) MainGame.run()
     }
 
-    //RoomMenu.stop
+
   })
 
   def initMutableTexts: ListBuffer[Message] = {

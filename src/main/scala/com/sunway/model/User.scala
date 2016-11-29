@@ -1,8 +1,11 @@
 package com.sunway.model
 
+import akka.util.Timeout
+import com.github.dunnololda.scage.support.Vec
 import com.sunway.screen.gamescreen.Character
 import com.sunway.util.MutableString
 
+import scala.concurrent.duration._
 /**
   * Created by Mr_RexZ on 11/18/2016.
   */
@@ -13,6 +16,8 @@ object User {
   val maxPlayerInRoom = 2
   val HOST_ROOM_ID = 0
 
+  implicit val timeout = Timeout(5.seconds)
+
 
   //TODO fix this as this is for debugging
   val targetRoomNum: MutableString = new MutableString("0")
@@ -22,8 +27,18 @@ object User {
   var playerNames = Array.fill[MutableString](maxPlayerInRoom)(new MutableString(""))
   var playerRoomStats = Array.fill[MutableString](maxPlayerInRoom)(new MutableString(""))
   var gameState = WAITING_STATE
+  var mapState = WAITING_STATE
+  var readyPlay = false
+  var newPlayerJoining = false
+  var newPlayerPos: Option[Int] = None
+  var newPlayerVec = Vec()
+  var oldPlayerLeave = false
+  var oldPlayerPos: Option[Int] = None
 
 
   //GAMEPLAY
-  var charactersPos: Array[Character] = Array(null, null)
+  var charactersPos: Array[Vec] = Array(Vec(20, ConfigurationObject.windowHeight / 2 - 70), (Vec(150, ConfigurationObject.windowHeight / 2 - 70)))
+  var charactersObj = Array.fill[Character](maxPlayerInRoom)(null)
+  var mapInformation = Array[Tuple2[Float, Float]]()
+
 }
