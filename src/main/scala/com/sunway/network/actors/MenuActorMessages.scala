@@ -39,7 +39,7 @@ object MenuActorMessages {
 
   case class SendRoomState(clientRef: ActorRef, roomNum: Int, roomPos: Int, playerRoomState: Int, text: String)
 
-  case class UpdatePlayerTextState(roomPos: Int, targetName: String, text: String)
+  case class UpdatePlayerTextState(roomPos: Int, text: String)
 
 
   case class SendRequestJoin(actorRef: ActorRef, roomNum: Int, userName: String, password: String)

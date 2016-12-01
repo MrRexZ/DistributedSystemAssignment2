@@ -91,18 +91,18 @@ class ServerActor extends Actor {
         case targetName => {
           for (client <- roomActorRefPair(roomNum)
                if !client.isEmpty) {
-            client.get ! UpdatePlayerTextState(roomPos, targetName, text)
+            client.get ! UpdatePlayerTextState(roomPos, text)
           }
         }
       }
 
       println("all members ready " + allMembersReady)
-      //TODO WARNING HERE, DOES THE CLASS CORRECTLY DETECT THE MESSAGE?
+
       if (allMembersReady) {
         roomIsPlaying.put(roomNum, true)
         sendMessageToAllMembers(StartGame(roomActorRefPair(roomNum)), roomNum)
         val levelObject = new LevelGenerator(roomNum, roomActorRefPair(roomNum))
-        levelObject.genLevel(Vec(0, ConfigurationObject.windowHeight / 2 - 100), 0, 1000)
+        levelObject.genLevel(0, 3, Vec(0, ConfigurationObject.windowHeight / 2 - 100), 0, 1000, ConfigurationObject.windowHeight / 2 - 100)
         levelObject.sendGeneratedMap()
       }
 
@@ -110,7 +110,7 @@ class ServerActor extends Actor {
         for ((client, index) <- roomActorRefPair(roomNum).zipWithIndex) {
           if (client.isEmpty) return false
           else {
-            if (clientRoomState.get(roomNum).get(index) == WAITING_STATE) return false
+            if (clientRoomState(roomNum)(index) == WAITING_STATE) return false
           }
         }
         true

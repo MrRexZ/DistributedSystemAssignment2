@@ -8,6 +8,7 @@ import com.sunway.model.User._
 import com.sunway.network.Client
 import com.sunway.network.actors.GameplayActorMessages._
 import com.sunway.network.actors.MenuActorMessages._
+import com.sunway.screen.gamescreen.MainGame
 
 import scala.collection.mutable.ListBuffer
 import scala.concurrent.duration._
@@ -51,7 +52,7 @@ class ClientActor extends Actor {
 
     }
 
-    case UpdatePlayerTextState(roomPos, targetName, playerRoomState) => {
+    case UpdatePlayerTextState(roomPos, playerRoomState) => {
       playerRoomStats(roomPos).string = playerRoomState
     }
 
@@ -110,6 +111,12 @@ class ClientActor extends Actor {
   //TODO work on this receive method. It needs constant update of the list from heartbeat!!
   def bePlayer: Actor.Receive = {
 
+    case InformWin(playerWin) => {
+      MainGame.pause()
+      MainGame.lost = true
+      MainGame.winningPlayer = Some(playerWin)
+    }
+
     case UpdateClientsListInGame(roomMembers, playerPos) => {
       clientsActorRef = roomMembers
       ActorsUtil.updateMembersNameList(roomMembers.toList)
@@ -128,7 +135,7 @@ class ClientActor extends Actor {
     }
 
     case SendCoordinatesToTarget(posX, posY, fromPlayer) => {
-      charactersObj(fromPlayer).body.setPosition(posX, posY)
+      if (charactersObj(fromPlayer) != null) charactersObj(fromPlayer).body.setPosition(posX, posY)
     }
     case UpdateVelocity(speedX, speedY, restingState, fromPlayer) => {
       var charToUpdate = charactersObj(fromPlayer)
@@ -139,11 +146,29 @@ class ClientActor extends Actor {
     case UpdateForce(forceX, forceY, fromPlayer) => {
       charactersObj(fromPlayer).body.setForce(forceX, forceY)
     }
+
+    case UpdateDirection(previousXSpeed, fromPlayer) => charactersObj(fromPlayer).previousXSpeed = previousXSpeed
+
+    case CreateBullet(fromPlayer, coordX, coordY, targetCoorX, targetCoorY) => {
+      charactersObj(fromPlayer).assignBullet(Vec(coordX, coordY), Vec(targetCoorX, targetCoorY))
+    }
+
+
+
     case SendCoordinatesFromMe(posX, posY) => sendMessagesToAllClientsNotMe(SendCoordinatesToTarget(posX, posY, myRoomPos.string.toInt), clientsActorRef.toList)
     case SendVelocity(speedX, speedY, restingState) => sendMessagesToAllClientsNotMe(UpdateVelocity(speedX, speedY, restingState, myRoomPos.string.toInt), clientsActorRef.toList)
     case SendForceFromMe(forceX, forceY) => sendMessagesToAllClientsNotMe(UpdateForce(forceX, forceY, myRoomPos.string.toInt), clientsActorRef.toList)
     case CreateCharacterFromMe(coordX, coordY) => sendMessagesToAllClientsNotMe(CreateCharacter(myRoomPos.string.toInt, coordX, coordY), clientsActorRef.toList)
-
+    case UpdateDirectionFromMe(previousXSpeed) => sendMessagesToAllClientsNotMe(UpdateDirection(previousXSpeed, myRoomPos.string.toInt), clientsActorRef.toList)
+    case CreateBulletFromMe(coordX, coordY, targetCoorX, targetCoorY) => sendMessagesToAllClientsNotMe(CreateBullet(myRoomPos.string.toInt, coordX, coordY, targetCoorX, targetCoorY), clientsActorRef.toList)
+    case InformWinState() => sendMessagesToAllClientsNotMe(InformWin(myRoomPos.string.toInt), clientsActorRef.toList)
+    case ChangeMenuState() => {
+      gameState = WAITING_STATE
+      mapState = WAITING_STATE
+      readyPlay = false
+      context.become(receive)
+      Client.actorServerSelect ! SendRoomState(Client.clientActor, targetRoomNum.string.toInt, myRoomPos.string.toInt, User.WAITING_STATE, " - WAITING")
+    }
     case _ => println("MESSAGE NOT DETECTED IN GAME")
   }
 

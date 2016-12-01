@@ -5,6 +5,7 @@ import com.github.dunnololda.scage.support.Vec
 import com.sunway.screen.gamescreen.Character
 import com.sunway.util.MutableString
 
+import scala.collection.mutable.ArrayBuffer
 import scala.concurrent.duration._
 /**
   * Created by Mr_RexZ on 11/18/2016.
@@ -39,6 +40,6 @@ object User {
   //GAMEPLAY
   var charactersPos: Array[Vec] = Array(Vec(20, ConfigurationObject.windowHeight / 2 - 70), (Vec(150, ConfigurationObject.windowHeight / 2 - 70)))
   var charactersObj = Array.fill[Character](maxPlayerInRoom)(null)
-  var mapInformation = Array[Tuple2[Float, Float]]()
+  var mapInformation = List[ArrayBuffer[Tuple2[Float, Float]]]()
 
 }

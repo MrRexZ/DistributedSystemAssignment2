@@ -6,6 +6,7 @@ import com.sunway.model.User._
 import com.sunway.screen.gamescreen.MainGame._
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.util.Random
 
 /**
   * Created by Mr_RexZ on 11/27/2016.
@@ -13,6 +14,7 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 object LevelDrawer {
 
   private val platformArray = ArrayBuffer[Physical]()
+  val flag = new Flag(Vec(-100, -100), 45, 70)
 
 
   /*
@@ -26,24 +28,47 @@ object LevelDrawer {
   */
 
 
+  def clearPlatform() {
+    platformArray.clear()
+  }
+
   def generatePlatformsInUser(): Unit = {
     //TODO check if the method below is executed
 
     val vecLevel = convertToVec(mapInformation)
-    val platform = new Platform(vecLevel: _*)
-    addPlatform(platform)
+
   }
 
-  def convertToVec(mapInformation: Array[Tuple2[Float, Float]]): List[Vec] = {
-    var tempVec = ListBuffer[Vec]()
-    for (platPoint <- mapInformation) {
-      tempVec += Vec(platPoint._1, platPoint._2)
+  def convertToVec(mapInformation: List[ArrayBuffer[Tuple2[Float, Float]]]) {
+    for (poly <- mapInformation) {
+
+      var tempVec = ListBuffer[Vec]()
+      for (platPoint <- poly) {
+        tempVec += Vec(platPoint._1, platPoint._2)
+      }
+      val platform = new Platform(tempVec.toList: _*)
+      addPlatform(platform)
+
     }
-    tempVec.toList
+
+    val randomIsland = Random.nextInt(mapInformation.last.size)
+    for ((lastPoly, index) <- mapInformation.last.zipWithIndex) {
+      if (index == 4) {
+        createFlag(lastPoly._1, lastPoly._2)
+      }
+    }
+
   }
 
   def addPlatform(platform: Physical): Unit = {
     physics.addPhysical(platform)
     platformArray += platform
+  }
+
+  def createFlag(x: Float, y: Float): Unit = {
+    flag.coord_=(Vec(x, y))
+
+    MainGame.physics.addPhysical(flag)
+
   }
 }

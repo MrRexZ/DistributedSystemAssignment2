@@ -5,6 +5,8 @@ import com.github.dunnololda.scage.ScageLib._
 import com.github.dunnololda.scage.support.Vec
 import com.github.dunnololda.scage.support.physics.ScagePhysics
 import com.sunway.model.User._
+import com.sunway.network.Client
+import com.sunway.network.actors.GameplayActorMessages.{ChangeMenuState, InformWinState, SendCoordinatesFromMe}
 
 /**
   * Created by Mr_RexZ on 11/24/2016.
@@ -13,17 +15,17 @@ object MainGame extends ScageScreen("Main Screen") {
 
 
   val physics = ScagePhysics(gravity = Vec(0, -50))
-  val myChar = charactersObj(myRoomPos.string.toInt)
   private val log = MySimpleLogger(this.getClass.getName)
   private var uke_speed = 30
   private var farthest_coord = Vec.zero
+  if (myRoomPos.string.toInt == 1) Thread.sleep(1000)
   charactersObj = Array(new Character(Vec(20, windowHeight / 2 - 70), 0), new Character(Vec(150, windowHeight / 2 - 70), 1))
-  private var lost = false
+  private var won = false
+  var lost = false
+  var winningPlayer: Option[Int] = None
 
-  physics.addPhysical(myChar)
-  for (otherChar <- charactersObj) {
-    if (!otherChar.equals(myChar)) physics.addPhysical(otherChar)
-  }
+  val myChar = charactersObj(myRoomPos.string.toInt)
+
 
   def ukeSpeed = uke_speed
 
@@ -31,17 +33,22 @@ object MainGame extends ScageScreen("Main Screen") {
     uke_speed = 0
   }
 
-  def loseCondition = {
-    farthest_coord.y - myChar.coord.y > windowHeight
+  def wonCondition = {
+    myChar.isTouching(LevelDrawer.flag)
   }
 
   init {
-    lost = false
+    pauseOff()
+    physics.addPhysical(myChar)
+    for (otherChar <- charactersObj) {
+      if (!otherChar.equals(myChar)) physics.addPhysical(otherChar)
+    }
+    backgroundColor = WHITE
     LevelDrawer.generatePlatformsInUser()
     val action_id = action {
-      if (loseCondition) {
+      if (wonCondition) {
         log.info("uke.velocity = " + myChar.velocity)
-        lost = true
+        won = true
         pause()
         deleteSelfNoWarn()
       }
@@ -55,45 +62,53 @@ object MainGame extends ScageScreen("Main Screen") {
     Unit
   }
 
-  action {
-    physics.step()
-
-    /*
-    if (farthest_coord.x - myChar.coord.x < 1000) {
-      log.info("adding new platforms..." + myChar.coord)
-      farthest_coord = LevelCreator.continueLevel(farthest_coord, 0, 1000)
-    }*/
+  clear {
+    physics.removeAll()
   }
 
 
-  backgroundColor = WHITE
+  action {
+    physics.step()
+  }
+
+
   center = myChar.coord
   keyIgnorePause(KEY_F2, onKeyDown = {
-    restart()
+    myChar.coord_=(Vec(20, windowHeight / 2 - 70))
+    Client.clientActor ! SendCoordinatesFromMe(myChar.body.getPosition.getX, myChar.body.getPosition.getY)
     pauseOff()
   })
 
-  keyIgnorePause(KEY_P, onKeyDown = if (!lost) switchPause())
-  keyIgnorePause(KEY_Q, onKeyDown = if (keyPressed(KEY_LCONTROL) || keyPressed(KEY_RCONTROL)) stopApp())
+  interface {
+    if (!onPause) {
+      interface {
+        print(myChar.coord.ix / 100, 20, windowHeight - 20)
+        if (onPause) {
+          if (won) {
+            print("YOU WON!!", 20, windowHeight - 40)
+            Client.clientActor ! InformWinState()
+            goBackScreen
+          }
+          else if (lost) {
+            print(s"You lost, player ${winningPlayer.get} won", 20, windowHeight - 40)
+            goBackScreen
 
-  /* interface {
-     print("Z to jump (Z twice to double jump)\n" +
-       "X to break obstacles\n" +
-       "Down Arrow to fast down\n" +
-       "P to pause current game\n" +
-       "F2 to start the new one\n\n" +
-       "Press P", 20, windowHeight - 20)
-     if (!onPause) {
-       interface {
-         print(myChar.coord.ix / 100, 20, windowHeight - 20)
-         if (onPause) {
-           if (lost) print("Oops! You smashed to death (press F2 to start new game)", 20, windowHeight - 40)
-           else print("Pause (Press P)", windowWidth / 2, windowHeight / 2)
-         }
-       }
-       deleteSelfNoWarn()
-     }
-   }*/
+          }
+        }
+      }
+      deleteSelfNoWarn()
+    }
+  }
+
+  private def goBackScreen {
+    Thread.sleep(1000)
+    Client.clientActor ! ChangeMenuState()
+    backgroundColor = BLACK
+    MainGame.clear()
+    MainGame.stop()
+  }
+
+
 
   //pause()
 

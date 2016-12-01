@@ -3,7 +3,7 @@ package com.sunway.network.actors
 import akka.actor.ActorRef
 import com.github.dunnololda.scage.support.Vec
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 /**
   * Created by Mr_RexZ on 11/24/2016.
@@ -34,7 +34,21 @@ object GameplayActorMessages {
 
   case class UpdateForce(forceX: Float, forceY: Float, fromPlayer: Int)
 
-  case class SendMapData(mapCoordinates: Array[Tuple2[Float, Float]])
+  case class UpdateDirection(previousXSpeed: Int, fromPlayer: Int)
+
+  case class UpdateDirectionFromMe(fromPlayer: Int)
+
+  case class CreateBullet(fromPlayer: Int, coordX: Float, coordY: Float, targetCoorX: Float, targetCoorY: Float)
+
+  case class CreateBulletFromMe(coordX: Float, coordY: Float, targetCoorX: Float, targetCoorY: Float)
+
+  case class InformWin(playerWin: Int)
+
+  case class InformWinState()
+
+  case class ChangeMenuState()
+
+  case class SendMapData(mapCoordinates: List[ArrayBuffer[Tuple2[Float, Float]]])
 
   case class SendMapState(state: Int)
 
