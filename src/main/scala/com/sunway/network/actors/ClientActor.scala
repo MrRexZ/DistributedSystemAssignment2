@@ -145,19 +145,24 @@ class ClientActor extends Actor {
       if (charactersObj(fromPlayer) != null) charactersObj(fromPlayer).body.setPosition(posX, posY)
     }
     case UpdateVelocity(speedX, speedY, restingState, fromPlayer) => {
-      var charToUpdate = charactersObj(fromPlayer)
-      charToUpdate.velocity_=(Vec(speedX, speedY))
-      charToUpdate.body.setIsResting(restingState)
+      if (charactersObj(fromPlayer) != null) {
+
+        var charToUpdate = charactersObj(fromPlayer)
+        charToUpdate.velocity_=(Vec(speedX, speedY))
+        charToUpdate.body.setIsResting(restingState)
+      }
     }
 
     case UpdateForce(forceX, forceY, fromPlayer) => {
-      charactersObj(fromPlayer).body.setForce(forceX, forceY)
+      if (charactersObj(fromPlayer) != null) {
+        charactersObj(fromPlayer).body.setForce(forceX, forceY)
+      }
     }
 
-    case UpdateDirection(previousXSpeed, fromPlayer) => charactersObj(fromPlayer).previousXSpeed = previousXSpeed
+    case UpdateDirection(previousXSpeed, fromPlayer) => if (charactersObj(fromPlayer) != null) charactersObj(fromPlayer).previousXSpeed = previousXSpeed
 
     case CreateBullet(fromPlayer, coordX, coordY, targetCoorX, targetCoorY) => {
-      charactersObj(fromPlayer).assignBullet(fromPlayer, Vec(coordX, coordY), Vec(targetCoorX, targetCoorY))
+      if (charactersObj(fromPlayer) != null) charactersObj(fromPlayer).assignBullet(fromPlayer, Vec(coordX, coordY), Vec(targetCoorX, targetCoorY))
     }
 
     case UpdateClientsListRemovePlayerInGame(clientActors, removedPlayer) => {
@@ -180,6 +185,7 @@ class ClientActor extends Actor {
       mapState = WAITING_STATE
       readyPlay = false
       context.become(receive)
+      Client.actorServerSelect ! UpdateRoomToMenuStage(targetRoomNum.string.toInt)
       Client.actorServerSelect ! SendRoomState(self, targetRoomNum.string.toInt, myRoomPos.string.toInt, User.WAITING_STATE, " - WAITING")
       sendMessagesToAllClientsNotMe(ChangeMenuState(), clientsActorRef.toList, self)
     }
@@ -203,7 +209,6 @@ class ClientActor extends Actor {
     }
 
     case SendMyCharacterObject(playerPos, x, y) => {
-      sendMessagesToAllClientsNotMe(CreateCharacter(playerPos, x, y), clientsActorRef.toList, self)
       sendMessagesToAllClientsNotMe(AskCharObject(self), clientsActorRef.toList, self)
     }
 

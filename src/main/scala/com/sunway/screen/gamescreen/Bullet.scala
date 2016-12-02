@@ -43,20 +43,12 @@ class Bullet(id: Int, init_coord: Vec, targetCoord: Vec) extends DynaBall(init_c
 
   val bulletRender = render {
     drawDisplayList(ROCKET_ANIMATION(next_frame), coord)
-
   }
 
   clear {
-    println("EXECUTED CLEAR ")
     delOperations(bulletRender, bulletFrame)
     deleteSelfNoWarn()
   }
 
-  /*
-  clear {
-    println("EXECUTED CLEAR")
-    delAllOperations()
 
-  }
-  */
 }

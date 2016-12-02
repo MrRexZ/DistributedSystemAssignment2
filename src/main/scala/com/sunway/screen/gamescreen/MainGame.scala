@@ -49,26 +49,23 @@ object MainGame extends ScageScreen("Main Screen") {
 
   def createChar: Unit = {
     val newPlayerPost: Int = newPlayerPos.get
-    charactersObj(newPlayerPost) = new Character(charactersPos(newPlayerPost), newPlayerPost)
+    charactersObj(newPlayerPost) = new Character(newPlayerVec, newPlayerPost)
     physics.addPhysical(charactersObj(newPlayerPost))
     newPlayerJoining = false
   }
 
   def delChar(oldPlayerPost: Int): Unit = {
+
     physics.removePhysicals(charactersObj(oldPlayerPost))
     oldPlayerLeave = false
   }
-
 
   init {
     won = false
     lost = false
     goBack = false
     winningPlayer = None
-
     pauseOff()
-
-
     backgroundColor = WHITE
     LevelDrawer.generatePlatformsInUser()
     val action_id = action {
@@ -79,7 +76,6 @@ object MainGame extends ScageScreen("Main Screen") {
         deleteSelfNoWarn()
       }
     }
-
     clear {
       delOperationNoWarn(action_id)
       deleteSelfNoWarn()
@@ -101,10 +97,7 @@ object MainGame extends ScageScreen("Main Screen") {
     myChar.isTouching(LevelDrawer.flag)
   }
 
-
   center = myChar.coord
-
-
 
   interface {
         if (onPause) {
@@ -139,9 +132,10 @@ object MainGame extends ScageScreen("Main Screen") {
 
   onEvent("RESET POS") {
     myChar.coord_=(Vec(20, windowHeight / 2 - 70))
+    myChar.velocity_=(Vec(0, 0))
+    myChar.body.setForce(0f, 0f)
     Client.clientActor ! SendCoordinatesFromMe(myChar.body.getPosition.getX, myChar.body.getPosition.getY)
   }
-
 
   private def goBackScreen {
     Client.clientActor ! ChangeMenuState()

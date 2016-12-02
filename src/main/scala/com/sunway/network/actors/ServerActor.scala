@@ -83,6 +83,8 @@ class ServerActor extends Actor {
       sender ! containsClient(roomNum, clientRef)
     }
 
+    case UpdateRoomToMenuStage(roomNum) => roomIsPlaying.remove(roomNum)
+
     case SendRoomState(clientRef: ActorRef, roomNum: Int, roomPos: Int, playerRoomState: Int, text: String) => {
       clientRoomState(roomNum).update(roomPos, playerRoomState)
       implicit val timeout = Timeout(5.seconds)

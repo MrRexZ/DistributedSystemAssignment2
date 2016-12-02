@@ -45,7 +45,7 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
   var aBulletReceived = false
 
 
-  init {
+  val initOp = init {
     setDefaultSpeed()
     coord = coordVec
     velocity = Vec(ukeSpeed, 0)
@@ -189,8 +189,7 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
     }
   }
 
-
-  render(-2) {
+  val charRender = render(-2) {
     if (velocity.x > 0 && isTouching) {
       drawDisplayList(uke_animation_right(frame), coord)
     }
@@ -201,11 +200,19 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
       if (previousXSpeed < 0) drawDisplayList(uke_stand_left, coord)
       else if (previousXSpeed >= 0) drawDisplayList(uke_stand_right, coord)
     }
+    if (User.oldPlayerLeave == true && !User.oldPlayerPos.isEmpty && User.oldPlayerPos.get == charID) {
+      deleteSelfNoWarn()
+    }
+
+
   }
 
-  /*
-  action {
-    if (User.oldPlayerLeave==true && !User.oldPlayerPos.isEmpty && User.oldPlayerPos.get==charID) delAllOperations()
+  clear {
+    if (User.myRoomPos.string.toInt != charID) {
+      println("Delete rendering")
+      delRender(charRender)
+    }
   }
-*/
+
+
 }

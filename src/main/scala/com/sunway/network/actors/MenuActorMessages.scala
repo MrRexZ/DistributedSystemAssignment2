@@ -10,8 +10,6 @@ import scala.collection.mutable.ListBuffer
 object MenuActorMessages {
 
 
-  //DON'T CHANGE THE HEARTBEATID!!!
-
   val GET_HEARTBEAT_P1 = 0
   val GET_HEARTBEAT_P2 = 1
   val GET_HEARTBEAT_P3 = 2
@@ -80,5 +78,7 @@ object MenuActorMessages {
   case class UpdateClientsList(newList: ListBuffer[Option[ActorRef]])
 
   case class StartGame(membersRoomList: ListBuffer[Option[ActorRef]])
+
+  case class UpdateRoomToMenuStage(roomNum: Int)
 
 }
