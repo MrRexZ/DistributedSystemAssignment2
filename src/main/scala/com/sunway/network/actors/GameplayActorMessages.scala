@@ -10,7 +10,13 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
   */
 object GameplayActorMessages {
 
-  case class UpdateClientsListInGame(roomMembers: ListBuffer[Option[ActorRef]], playerPos: Int)
+  case class UpdateClientsListNewPlayerInGame(roomMembers: ListBuffer[Option[ActorRef]], playerPos: Int)
+
+  case class UpdateClientsListRemovePlayerInGame(clientActors: ListBuffer[Option[ActorRef]], playerPos: Int)
+
+  case class SendMyCharacterObject(playerPos: Int, x: Float, y: Float)
+
+  case class AskCharObject(clientRef: ActorRef)
 
   case class CreateCharacter(playerPos: Int, coordX: Float, coordY: Float)
 

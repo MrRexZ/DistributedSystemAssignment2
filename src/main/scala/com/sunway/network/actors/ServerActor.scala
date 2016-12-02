@@ -9,7 +9,8 @@ import com.sunway.model.Database._
 import com.sunway.model.User._
 import com.sunway.model.{ConfigurationObject, LevelGenerator}
 import com.sunway.network.Server._
-import com.sunway.network.actors.GameplayActorMessages.DistributeMessageToAllClients
+import com.sunway.network.actors.ActorsUtil._
+import com.sunway.network.actors.GameplayActorMessages.{DistributeMessageToAllClients, SendMapData, SendMapState, UpdateClientsListNewPlayerInGame}
 import com.sunway.network.actors.MenuActorMessages._
 
 import scala.collection.mutable.ListBuffer
@@ -96,45 +97,63 @@ class ServerActor extends Actor {
         }
       }
 
-      println("all members ready " + allMembersReady)
+      println("all members ready " + allMembersReady(roomNum))
 
-      if (allMembersReady) {
+      if (allMembersReady(roomNum) && roomIsPlaying.get(roomNum).isEmpty) {
         roomIsPlaying.put(roomNum, true)
         sendMessageToAllMembers(StartGame(roomActorRefPair(roomNum)), roomNum)
         val levelObject = new LevelGenerator(roomNum, roomActorRefPair(roomNum))
         levelObject.genLevel(0, 4, Vec(0, ConfigurationObject.windowHeight / 2 - 100), 0, 1000, ConfigurationObject.windowHeight / 2 - 100)
         levelObject.sendGeneratedMap()
+        temporaryMap.put(roomNum, levelObject.platforms.toList)
+      }
+      else if (allMembersReady(roomNum) && roomIsPlaying(roomNum) == true) {
+
+        sendMessageToAllMembers(StartGame(roomActorRefPair(roomNum)), roomNum)
+        sendMessageToAllMembers(UpdateClientsListNewPlayerInGame(roomActorRefPair(roomNum), roomPos), roomNum)
+        sendGeneratedMapJoiningPlayer()
+
+
+        def sendGeneratedMapJoiningPlayer(): Unit = {
+
+          val futureSendMap: Future[Int] = (clientRef ? SendMapData(temporaryMap(roomNum))).mapTo[Int]
+          futureSendMap onComplete {
+            case Success(state) => {
+              println("SUCCESS SENDING MAP TO NEW PLAYER!!")
+              clientRef ! SendMapState(state)
+            }
+            case Failure(state) => {
+              println("ERROR IN MAP STATE NEW PLAYER : " + state)
+            }
+          }
+
+        }
       }
 
-      def allMembersReady: Boolean = {
-        for ((client, index) <- roomActorRefPair(roomNum).zipWithIndex) {
-          if (client.isEmpty) return false
-          else {
-            if (clientRoomState(roomNum)(index) == WAITING_STATE) return false
-          }
-        }
-        true
-      }
+
     }
 
 
     case BeAskedRoomIsPlaying(roomNum) => sender ! roomIsPlaying(roomNum)
 
-    //TODO remove this on the win events
     case DistributeMessageToAllClients(message, roomNum) => {
       sendMessageToAllMembers(message, roomNum)
     }
 
     case AllPlayerReceivedMap(roomNum) => {
-      val tempMapState = Array.fill[Int](maxPlayerInRoom)(WAITING_STATE)
+      //TODO change the size of array below to maxPlayerInRoom
+      val tempMapState = Array.fill[Int](calculateValueWithSome(roomNum))(WAITING_STATE)
       val tempClientsList = roomActorRefPair(roomNum)
-      for ((clientRefOpt, i) <- roomActorRefPair(roomNum).zipWithIndex) {
+      for ((clientRefOpt, i) <- roomActorRefPair(roomNum).zipWithIndex
+           if !clientRefOpt.isEmpty) {
         (clientRefOpt.get ? BeAskedMapState).mapTo[Int].onComplete {
           case Success(state) => {
             tempMapState(i) = state
             if (allMapReadyState(tempMapState)) {
-              for (clientRef <- tempClientsList) {
+              for (clientRef <- tempClientsList
+                   if !clientRef.isEmpty) {
                 clientRef.get ! BeAskedPlay()
+                println("BE ASKED PLAY")
               }
             }
           }
@@ -144,6 +163,14 @@ class ServerActor extends Actor {
     }
   }
 
+
+  def calculateValueWithSome(roomNum: Int): Int = {
+    var counter = 0
+    for (i <- roomActorRefPair(roomNum)
+         if !i.isEmpty) counter += 1
+
+    return counter
+  }
   def allMapReadyState(tempMapState: Array[Int]): Boolean = {
     for (state <- tempMapState) {
       if (state == WAITING_STATE) return false
@@ -199,13 +226,6 @@ class ServerActor extends Actor {
       if (client.get.equals(clientRef)) return true
     }
     return false
-  }
-
-  def sendMessageToAllMembers[T](message: T, roomNum: Int): Unit = {
-    for (client <- roomActorRefPair.get(roomNum).get
-         if !client.isEmpty) {
-      client.get ! message
-    }
   }
 
 

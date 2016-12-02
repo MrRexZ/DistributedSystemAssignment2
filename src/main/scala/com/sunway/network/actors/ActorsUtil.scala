@@ -3,6 +3,7 @@ package com.sunway.network.actors
 import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
+import com.sunway.model.Database._
 import com.sunway.model.User._
 import com.sunway.network.actors.MenuActorMessages.{BeAskedStats, BeAskedUsername}
 
@@ -37,6 +38,31 @@ object ActorsUtil {
       }
     }
   }
+
+  def allMembersReady(roomNum: Int): Boolean = {
+    for ((client, index) <- roomActorRefPair(roomNum).zipWithIndex) {
+      if (client.isEmpty) println("nothing")
+      else {
+        if (clientRoomState(roomNum)(index) == WAITING_STATE) return false
+      }
+    }
+    true
+  }
+
+  def sendMessageToAllMembers[T](message: T, roomNum: Int): Unit = {
+    for (client <- roomActorRefPair.get(roomNum).get
+         if !client.isEmpty) {
+      client.get ! message
+    }
+  }
+
+  def sendMessagesToAllClientsNotMe[T](message: T, listPlayer: List[Option[ActorRef]], clientRef: ActorRef): Unit = {
+    implicit val timeout = Timeout(5 seconds)
+    for (player <- listPlayer
+         if !player.isEmpty && !player.get.equals(clientRef))
+      player.get ! message
+  }
+
 
 
 }

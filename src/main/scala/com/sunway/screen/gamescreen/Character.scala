@@ -201,7 +201,11 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
       if (previousXSpeed < 0) drawDisplayList(uke_stand_left, coord)
       else if (previousXSpeed >= 0) drawDisplayList(uke_stand_right, coord)
     }
-
   }
 
+  /*
+  action {
+    if (User.oldPlayerLeave==true && !User.oldPlayerPos.isEmpty && User.oldPlayerPos.get==charID) delAllOperations()
+  }
+*/
 }

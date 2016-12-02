@@ -2,6 +2,8 @@ package com.sunway.network.actors
 
 import akka.actor.{Actor, ActorIdentity, ActorRef, Cancellable, Identify, Props}
 import com.sunway.model.User._
+import com.sunway.network.actors.ActorsUtil._
+import com.sunway.network.actors.GameplayActorMessages.UpdateClientsListRemovePlayerInGame
 import com.sunway.network.actors.MenuActorMessages.{FrequencyChangeMessage, HeartbeatMessage, StartMessage, _}
 
 import scala.collection.mutable.ListBuffer
@@ -54,7 +56,8 @@ class HeartbeatActor(roomNum: Int, interval: Int, clientActors: ListBuffer[Optio
       def removeActor {
         val removedPlayer: Int = playerID.toString.toInt
         clientActors.update(removedPlayer, None)
-        updateClientsList(clientActors)
+        if (!ActorsUtil.allMembersReady(roomNum)) sendMessageToAllMembers(UpdateClientsList(clientActors), roomNum)
+        else sendMessageToAllMembers(UpdateClientsListRemovePlayerInGame(clientActors, removedPlayer), roomNum)
 
       }
     }
@@ -63,12 +66,6 @@ class HeartbeatActor(roomNum: Int, interval: Int, clientActors: ListBuffer[Optio
 
   }
 
-  def updateClientsList(newListActors: ListBuffer[Option[ActorRef]]): Unit = {
-    for (clientActor <- newListActors
-         if !clientActor.isEmpty) {
-      clientActor.get ! UpdateClientsList(newListActors)
-    }
-  }
 
 }
 

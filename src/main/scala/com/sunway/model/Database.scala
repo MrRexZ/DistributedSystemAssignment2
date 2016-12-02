@@ -4,7 +4,7 @@ import akka.actor.ActorRef
 import com.google.common.collect.{BiMap, HashBiMap}
 
 import scala.collection.mutable
-import scala.collection.mutable.{ListBuffer, Map}
+import scala.collection.mutable.{ArrayBuffer, ListBuffer, Map}
 
 /**
   * Created by Mr_RexZ on 11/26/2016.
@@ -15,6 +15,7 @@ object Database {
   val roomActorRefPair = mutable.Map[Int, ListBuffer[Option[ActorRef]]]()
   val clientRoomState = Map[Int, ListBuffer[Int]]()
   val roomIsPlaying = Map[Int, Boolean]()
+  val temporaryMap = Map[Int, List[ArrayBuffer[Tuple2[Float, Float]]]]()
 
 
   //TODO Create an authentication system later on to validate username.

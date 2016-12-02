@@ -6,7 +6,7 @@ import com.github.dunnololda.scage.support.Vec
 import com.github.dunnololda.scage.support.physics.ScagePhysics
 import com.sunway.model.User._
 import com.sunway.network.Client
-import com.sunway.network.actors.GameplayActorMessages.{ChangeMenuState, InformWinState, SendCoordinatesFromMe}
+import com.sunway.network.actors.GameplayActorMessages._
 
 /**
   * Created by Mr_RexZ on 11/24/2016.
@@ -18,15 +18,13 @@ object MainGame extends ScageScreen("Main Screen") {
   private val log = MySimpleLogger(this.getClass.getName)
   private var uke_speed = 30
   private var farthest_coord = Vec.zero
-  if (myRoomPos.string.toInt == 1) Thread.sleep(1000)
-  charactersObj = Array(new Character(Vec(20, windowHeight / 2 - 70), 0), new Character(Vec(150, windowHeight / 2 - 70), 1))
+  private var NO_NEED_REPLY = 0
+  private var NEED_REPLY = 1
+
   var won = false
   var lost = false
   var winningPlayer: Option[Int] = None
   var goBack = false
-
-  val myChar = charactersObj(myRoomPos.string.toInt)
-
 
   def ukeSpeed = uke_speed
 
@@ -34,9 +32,33 @@ object MainGame extends ScageScreen("Main Screen") {
     uke_speed = 0
   }
 
-  def wonCondition = {
-    myChar.isTouching(LevelDrawer.flag)
+  charactersObj(myRoomPos.string.toInt) = new Character(charactersPos(myRoomPos.string.toInt), myRoomPos.string.toInt)
+  val myChar = charactersObj(myRoomPos.string.toInt)
+
+
+  preinit {
+    physics.addPhysical(myChar)
+    Client.clientActor ! SendMyCharacterObject(myRoomPos.string.toInt, myChar.coord.x, myChar.coord.y)
   }
+
+  action {
+    if (newPlayerJoining) createChar
+    if (oldPlayerLeave) delChar(oldPlayerPos.get)
+  }
+
+
+  def createChar: Unit = {
+    val newPlayerPost: Int = newPlayerPos.get
+    charactersObj(newPlayerPost) = new Character(charactersPos(newPlayerPost), newPlayerPost)
+    physics.addPhysical(charactersObj(newPlayerPost))
+    newPlayerJoining = false
+  }
+
+  def delChar(oldPlayerPost: Int): Unit = {
+    physics.removePhysicals(charactersObj(oldPlayerPost))
+    oldPlayerLeave = false
+  }
+
 
   init {
     won = false
@@ -45,10 +67,8 @@ object MainGame extends ScageScreen("Main Screen") {
     winningPlayer = None
 
     pauseOff()
-    physics.addPhysical(myChar)
-    for (otherChar <- charactersObj) {
-      if (!otherChar.equals(myChar)) physics.addPhysical(otherChar)
-    }
+
+
     backgroundColor = WHITE
     LevelDrawer.generatePlatformsInUser()
     val action_id = action {
@@ -74,6 +94,11 @@ object MainGame extends ScageScreen("Main Screen") {
 
   action {
     physics.step()
+  }
+
+
+  def wonCondition = {
+    myChar.isTouching(LevelDrawer.flag)
   }
 
 

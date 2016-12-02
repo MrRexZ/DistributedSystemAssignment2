@@ -81,7 +81,8 @@ class LevelGenerator(roomNum: Int, clientsList: ListBuffer[Option[ActorRef]]) {
   }
 
   def sendGeneratedMap(): Unit = {
-    for (clientRef <- clientsList) {
+    for (clientRef <- clientsList
+         if !clientRef.isEmpty) {
       val futureSendMap: Future[Int] = (clientRef.get ? SendMapData(_platformsPoints.toList)).mapTo[Int]
       futureSendMap onComplete {
         case Success(state) => {

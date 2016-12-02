@@ -1,17 +1,16 @@
 package com.sunway.network.actors
 
 import akka.actor.{Actor, ActorIdentity, ActorRef}
-import akka.util.Timeout
 import com.github.dunnololda.scage.support.Vec
 import com.sunway.model.User
 import com.sunway.model.User._
 import com.sunway.network.Client
+import com.sunway.network.actors.ActorsUtil._
 import com.sunway.network.actors.GameplayActorMessages._
 import com.sunway.network.actors.MenuActorMessages._
 import com.sunway.screen.gamescreen.MainGame
 
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.duration._
 
 
 /**
@@ -123,7 +122,7 @@ class ClientActor extends Actor {
     }
 
 
-    case UpdateClientsListInGame(roomMembers, playerPos) => {
+    case UpdateClientsListNewPlayerInGame(roomMembers, playerPos) => {
       clientsActorRef = roomMembers
       ActorsUtil.updateMembersNameList(roomMembers.toList)
       self ! CreateCharacter(playerPos, 50, 100)
@@ -135,7 +134,9 @@ class ClientActor extends Actor {
       newPlayerVec = Vec(coordX, coordY)
     }
 
+
     case RemovePlayer(playerPos) => {
+      println("REMOVING PLAYER INSIDE")
       oldPlayerLeave = true
       oldPlayerPos = Option(playerPos)
     }
@@ -159,42 +160,54 @@ class ClientActor extends Actor {
       charactersObj(fromPlayer).assignBullet(fromPlayer, Vec(coordX, coordY), Vec(targetCoorX, targetCoorY))
     }
 
-    case UpdateClientsList(roomMembers) => {
-      println("EXECUTED CLIENTS LIST")
-      self ! InformWon()
-      ActorsUtil.updateMembersNameList(roomMembers.toList)
+    case UpdateClientsListRemovePlayerInGame(clientActors, removedPlayer) => {
+
+      println("REMOVING PLAYER OUTSIDE")
+      self ! RemovePlayer(removedPlayer)
+      ActorsUtil.updateMembersNameList(clientActors.toList)
     }
 
 
-
-    case SendCoordinatesFromMe(posX, posY) => sendMessagesToAllClientsNotMe(SendCoordinatesToTarget(posX, posY, myRoomPos.string.toInt), clientsActorRef.toList)
-    case SendVelocity(speedX, speedY, restingState) => sendMessagesToAllClientsNotMe(UpdateVelocity(speedX, speedY, restingState, myRoomPos.string.toInt), clientsActorRef.toList)
-    case SendForceFromMe(forceX, forceY) => sendMessagesToAllClientsNotMe(UpdateForce(forceX, forceY, myRoomPos.string.toInt), clientsActorRef.toList)
-    case CreateCharacterFromMe(coordX, coordY) => sendMessagesToAllClientsNotMe(CreateCharacter(myRoomPos.string.toInt, coordX, coordY), clientsActorRef.toList)
-    case UpdateDirectionFromMe(previousXSpeed) => sendMessagesToAllClientsNotMe(UpdateDirection(previousXSpeed, myRoomPos.string.toInt), clientsActorRef.toList)
-    case CreateBulletFromMe(coordX, coordY, targetCoorX, targetCoorY) => sendMessagesToAllClientsNotMe(CreateBullet(myRoomPos.string.toInt, coordX, coordY, targetCoorX, targetCoorY), clientsActorRef.toList)
-    case InformWinState() => sendMessagesToAllClientsNotMe(InformLost(myRoomPos.string.toInt), clientsActorRef.toList)
+    case SendCoordinatesFromMe(posX, posY) => sendMessagesToAllClientsNotMe(SendCoordinatesToTarget(posX, posY, myRoomPos.string.toInt), clientsActorRef.toList, self)
+    case SendVelocity(speedX, speedY, restingState) => sendMessagesToAllClientsNotMe(UpdateVelocity(speedX, speedY, restingState, myRoomPos.string.toInt), clientsActorRef.toList, self)
+    case SendForceFromMe(forceX, forceY) => sendMessagesToAllClientsNotMe(UpdateForce(forceX, forceY, myRoomPos.string.toInt), clientsActorRef.toList, self)
+    case CreateCharacterFromMe(coordX, coordY) => sendMessagesToAllClientsNotMe(CreateCharacter(myRoomPos.string.toInt, coordX, coordY), clientsActorRef.toList, self)
+    case UpdateDirectionFromMe(previousXSpeed) => sendMessagesToAllClientsNotMe(UpdateDirection(previousXSpeed, myRoomPos.string.toInt), clientsActorRef.toList, self)
+    case CreateBulletFromMe(coordX, coordY, targetCoorX, targetCoorY) => sendMessagesToAllClientsNotMe(CreateBullet(myRoomPos.string.toInt, coordX, coordY, targetCoorX, targetCoorY), clientsActorRef.toList, self)
+    case InformWinState() => sendMessagesToAllClientsNotMe(InformLost(myRoomPos.string.toInt), clientsActorRef.toList, self)
     case ChangeMenuState() => {
       gameState = WAITING_STATE
       mapState = WAITING_STATE
       readyPlay = false
       context.become(receive)
       Client.actorServerSelect ! SendRoomState(self, targetRoomNum.string.toInt, myRoomPos.string.toInt, User.WAITING_STATE, " - WAITING")
-      sendMessagesToAllClientsNotMe(ChangeMenuState(), clientsActorRef.toList)
+      sendMessagesToAllClientsNotMe(ChangeMenuState(), clientsActorRef.toList, self)
     }
 
     case UpdatePlayerTextState(roomPos, playerRoomState) => {
       playerRoomStats(roomPos).string = playerRoomState
     }
 
-    case _ => println("MESSAGE NOT DETECTED IN GAME")
-  }
+    case BeAskedUsername => sender ! myName.string
 
-  def sendMessagesToAllClientsNotMe[T](message: T, listPlayer: List[Option[ActorRef]]): Unit = {
-    implicit val timeout = Timeout(5 seconds)
-    for (player <- listPlayer
-         if !player.isEmpty && !player.get.equals(Client.clientActor))
-      player.get ! message
+    case BeAskedStats(roomPos) => {
+      sender ! playerRoomStats(roomPos).string
+    }
+
+    case BeAskedMapState => {
+      sender ! mapState
+    }
+
+    case AskCharObject(clientRef) => {
+      clientRef ! CreateCharacter(myRoomPos.string.toInt, charactersObj(myRoomPos.string.toInt).coord.x, charactersObj(myRoomPos.string.toInt).coord.y)
+    }
+
+    case SendMyCharacterObject(playerPos, x, y) => {
+      sendMessagesToAllClientsNotMe(CreateCharacter(playerPos, x, y), clientsActorRef.toList, self)
+      sendMessagesToAllClientsNotMe(AskCharObject(self), clientsActorRef.toList, self)
+    }
+
+    case _ => println("MESSAGE NOT DETECTED IN GAME")
   }
 
 
