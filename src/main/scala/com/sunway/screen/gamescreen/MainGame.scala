@@ -20,9 +20,10 @@ object MainGame extends ScageScreen("Main Screen") {
   private var farthest_coord = Vec.zero
   if (myRoomPos.string.toInt == 1) Thread.sleep(1000)
   charactersObj = Array(new Character(Vec(20, windowHeight / 2 - 70), 0), new Character(Vec(150, windowHeight / 2 - 70), 1))
-  private var won = false
+  var won = false
   var lost = false
   var winningPlayer: Option[Int] = None
+  var goBack = false
 
   val myChar = charactersObj(myRoomPos.string.toInt)
 
@@ -38,6 +39,11 @@ object MainGame extends ScageScreen("Main Screen") {
   }
 
   init {
+    won = false
+    lost = false
+    goBack = false
+    winningPlayer = None
+
     pauseOff()
     physics.addPhysical(myChar)
     for (otherChar <- charactersObj) {
@@ -66,51 +72,57 @@ object MainGame extends ScageScreen("Main Screen") {
     physics.removeAll()
   }
 
-
   action {
     physics.step()
   }
 
 
   center = myChar.coord
-  keyIgnorePause(KEY_F2, onKeyDown = {
-    myChar.coord_=(Vec(20, windowHeight / 2 - 70))
-    Client.clientActor ! SendCoordinatesFromMe(myChar.body.getPosition.getX, myChar.body.getPosition.getY)
-    pauseOff()
-  })
+
+
 
   interface {
-    if (!onPause) {
-      interface {
-        print(myChar.coord.ix / 100, 20, windowHeight - 20)
         if (onPause) {
           if (won) {
             print("YOU WON!!", 20, windowHeight - 40)
             Client.clientActor ! InformWinState()
-            goBackScreen
+            goBack = true
+            println("WINNER EXECUTED")
+
           }
           else if (lost) {
             print(s"You lost, player ${winningPlayer.get} won", 20, windowHeight - 40)
-            goBackScreen
-
+            goBack = true
+            println("LOSER EXECUTED")
           }
         }
       }
-      deleteSelfNoWarn()
+
+  keyIgnorePause(KEY_P, onKeyDown = {
+    pauseOff()
+  })
+
+  action {
+    if (goBack) {
+      goBackScreen
+      goBack = false
     }
+    if (myChar.coord.y < -50) {
+      callEvent("RESET POS")
+    }
+    }
+
+  onEvent("RESET POS") {
+    myChar.coord_=(Vec(20, windowHeight / 2 - 70))
+    Client.clientActor ! SendCoordinatesFromMe(myChar.body.getPosition.getX, myChar.body.getPosition.getY)
   }
 
+
   private def goBackScreen {
-    Thread.sleep(1000)
     Client.clientActor ! ChangeMenuState()
     backgroundColor = BLACK
     MainGame.clear()
     MainGame.stop()
   }
-
-
-
-  //pause()
-
 
 }

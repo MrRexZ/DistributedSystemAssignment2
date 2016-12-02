@@ -35,7 +35,6 @@ object MainMenu extends ScageScreen("Scage App") {
 
   renderTextFunctions
 
-
   key(KEY_F1, onKeyDown = Future {
     myName.string = JOptionPane.showInputDialog("Input USERNAME here")
   })

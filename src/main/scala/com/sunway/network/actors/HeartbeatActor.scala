@@ -59,7 +59,7 @@ class HeartbeatActor(roomNum: Int, interval: Int, clientActors: ListBuffer[Optio
       }
     }
 
-    case _ => println("wut?\n")
+    case _ => println("what?\n")
 
   }
 

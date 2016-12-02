@@ -26,7 +26,7 @@ object Client extends ScageScreenApp("Client App", 640, 480) {
 
   println(clientSystem.asInstanceOf[ExtendedActorSystem].provider.getDefaultAddress.port)
 
-  val serverPath = "akka.tcp://ServerSystem@127.0.0.1:2553/user/serverActorName"
+  val serverPath = "akka.tcp://ServerSystem@127.0.0.1:2554/user/serverActorName"
   val actorServerSelect = clientSystem.actorSelection(serverPath)
 
   //TODO identify message should be sent only when there is a process required

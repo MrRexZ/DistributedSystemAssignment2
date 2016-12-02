@@ -102,7 +102,7 @@ class ServerActor extends Actor {
         roomIsPlaying.put(roomNum, true)
         sendMessageToAllMembers(StartGame(roomActorRefPair(roomNum)), roomNum)
         val levelObject = new LevelGenerator(roomNum, roomActorRefPair(roomNum))
-        levelObject.genLevel(0, 3, Vec(0, ConfigurationObject.windowHeight / 2 - 100), 0, 1000, ConfigurationObject.windowHeight / 2 - 100)
+        levelObject.genLevel(0, 4, Vec(0, ConfigurationObject.windowHeight / 2 - 100), 0, 1000, ConfigurationObject.windowHeight / 2 - 100)
         levelObject.sendGeneratedMap()
       }
 
@@ -125,7 +125,6 @@ class ServerActor extends Actor {
       sendMessageToAllMembers(message, roomNum)
     }
 
-
     case AllPlayerReceivedMap(roomNum) => {
       val tempMapState = Array.fill[Int](maxPlayerInRoom)(WAITING_STATE)
       val tempClientsList = roomActorRefPair(roomNum)
@@ -135,7 +134,7 @@ class ServerActor extends Actor {
             tempMapState(i) = state
             if (allMapReadyState(tempMapState)) {
               for (clientRef <- tempClientsList) {
-                clientRef.get ! BeAskedPlay
+                clientRef.get ! BeAskedPlay()
               }
             }
           }
@@ -218,16 +217,6 @@ class ServerActor extends Actor {
     genRoom
   }
 
-  /*
-  def sendMessageToAllMembers(roomNum : Int)(message : => Unit): Unit = {
-    for (client <- roomActorRefPair.get(roomNum).get
-         if !client.isEmpty) {
-              client.get ! message
-    }
-
-  }
-
-*/
 
 
 

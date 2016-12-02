@@ -41,6 +41,7 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
 
   var receiveBulletInPos = Vec()
   var receiveBulletTargetPos = Vec()
+  var receiveBulletFrom: Int = 0
   var aBulletReceived = false
 
 
@@ -60,7 +61,6 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
         callEvent(SEND_FORCE, (0f, 18000f))
         num_jump = max_jump
       } else if (num_jump2 == 0) {
-        //  callEvent(SEND_VELOCITY, (0.toFloat, -velocity.y.toFloat, false))
         callEvent(SEND_FORCE, (0f, 14000f))
         num_jump2 = max_jump2
       }
@@ -68,7 +68,6 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
 
     key(KEY_A, onKeyDown = {
       body.setIsResting(false)
-      // velocity_=(Vec(-60, velocity.y))
       callEvent(SEND_VELOCITY, (-60.toFloat, velocity.y, body.isResting))
     },
       onKeyUp = {
@@ -80,7 +79,6 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
     key(KEY_D, onKeyDown = {
       body.setIsResting(false)
       callEvent(SEND_VELOCITY, (60.toFloat, velocity.y, body.isResting))
-      //  callEvent(SEND_COORDINATES)
 
 
     }, onKeyUp = {
@@ -155,15 +153,16 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
     }
   }
 
-  def assignBullet(coord: Vec, targetCoor: Vec): Unit = {
+  def assignBullet(fromPlayer: Int, coord: Vec, targetCoor: Vec): Unit = {
     receiveBulletInPos = coord
     receiveBulletTargetPos = targetCoor
+    receiveBulletFrom = fromPlayer
     aBulletReceived = true
   }
 
   action {
     if (aBulletReceived == true) {
-      val bullet = new Bullet(User.myRoomPos.string.toInt, receiveBulletInPos, receiveBulletTargetPos)
+      val bullet = new Bullet(receiveBulletFrom, receiveBulletInPos, receiveBulletTargetPos)
       MainGame.physics.addPhysical(bullet)
       aBulletReceived = false
     }

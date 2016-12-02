@@ -42,7 +42,9 @@ object GameplayActorMessages {
 
   case class CreateBulletFromMe(coordX: Float, coordY: Float, targetCoorX: Float, targetCoorY: Float)
 
-  case class InformWin(playerWin: Int)
+  case class InformLost(playerWin: Int)
+
+  case class InformWon()
 
   case class InformWinState()
 

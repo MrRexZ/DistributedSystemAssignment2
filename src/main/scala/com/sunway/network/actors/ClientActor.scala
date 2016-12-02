@@ -31,8 +31,8 @@ class ClientActor extends Actor {
   def receive = {
 
     case ActorIdentity(GET_REF_SERVER, Some(ref)) => actorServerRef = Some(ref)
-    case AcceptPlayerAsHost(roomNum, playerRoomID, actorRefList) => {
 
+    case AcceptPlayerAsHost(roomNum, playerRoomID, actorRefList) => {
       latestServerReply = myName + ", you're ACCEPTED as HOST, room num is " + roomNum + "and ROOM ID is " + playerRoomID
       println(latestServerReply)
       assignNameToRoom(roomNum, playerRoomID, actorRefList)
@@ -49,7 +49,6 @@ class ClientActor extends Actor {
 
     case UpdateClientsList(roomMembers) => {
       ActorsUtil.updateMembersNameList(roomMembers.toList)
-
     }
 
     case UpdatePlayerTextState(roomPos, playerRoomState) => {
@@ -85,10 +84,10 @@ class ClientActor extends Actor {
       sender ! mapState
     }
 
-    case BeAskedPlay => {
+    case BeAskedPlay() => {
       readyPlay = true
-      //TODO Reformat this become function!!
       context.become(bePlayer)
+      println(s"player ${User.myRoomPos.string.toInt} IS ASKED TO PLAY")
     }
 
     //   case RestartActor => throw new IllegalStateException()
@@ -111,11 +110,18 @@ class ClientActor extends Actor {
   //TODO work on this receive method. It needs constant update of the list from heartbeat!!
   def bePlayer: Actor.Receive = {
 
-    case InformWin(playerWin) => {
+    case InformWon() => {
+      println("EXECUTED INFORM WON ")
+      MainGame.pause()
+      MainGame.won = true
+    }
+
+    case InformLost(playerWin) => {
       MainGame.pause()
       MainGame.lost = true
       MainGame.winningPlayer = Some(playerWin)
     }
+
 
     case UpdateClientsListInGame(roomMembers, playerPos) => {
       clientsActorRef = roomMembers
@@ -150,7 +156,13 @@ class ClientActor extends Actor {
     case UpdateDirection(previousXSpeed, fromPlayer) => charactersObj(fromPlayer).previousXSpeed = previousXSpeed
 
     case CreateBullet(fromPlayer, coordX, coordY, targetCoorX, targetCoorY) => {
-      charactersObj(fromPlayer).assignBullet(Vec(coordX, coordY), Vec(targetCoorX, targetCoorY))
+      charactersObj(fromPlayer).assignBullet(fromPlayer, Vec(coordX, coordY), Vec(targetCoorX, targetCoorY))
+    }
+
+    case UpdateClientsList(roomMembers) => {
+      println("EXECUTED CLIENTS LIST")
+      self ! InformWon()
+      ActorsUtil.updateMembersNameList(roomMembers.toList)
     }
 
 
@@ -161,14 +173,20 @@ class ClientActor extends Actor {
     case CreateCharacterFromMe(coordX, coordY) => sendMessagesToAllClientsNotMe(CreateCharacter(myRoomPos.string.toInt, coordX, coordY), clientsActorRef.toList)
     case UpdateDirectionFromMe(previousXSpeed) => sendMessagesToAllClientsNotMe(UpdateDirection(previousXSpeed, myRoomPos.string.toInt), clientsActorRef.toList)
     case CreateBulletFromMe(coordX, coordY, targetCoorX, targetCoorY) => sendMessagesToAllClientsNotMe(CreateBullet(myRoomPos.string.toInt, coordX, coordY, targetCoorX, targetCoorY), clientsActorRef.toList)
-    case InformWinState() => sendMessagesToAllClientsNotMe(InformWin(myRoomPos.string.toInt), clientsActorRef.toList)
+    case InformWinState() => sendMessagesToAllClientsNotMe(InformLost(myRoomPos.string.toInt), clientsActorRef.toList)
     case ChangeMenuState() => {
       gameState = WAITING_STATE
       mapState = WAITING_STATE
       readyPlay = false
       context.become(receive)
-      Client.actorServerSelect ! SendRoomState(Client.clientActor, targetRoomNum.string.toInt, myRoomPos.string.toInt, User.WAITING_STATE, " - WAITING")
+      Client.actorServerSelect ! SendRoomState(self, targetRoomNum.string.toInt, myRoomPos.string.toInt, User.WAITING_STATE, " - WAITING")
+      sendMessagesToAllClientsNotMe(ChangeMenuState(), clientsActorRef.toList)
     }
+
+    case UpdatePlayerTextState(roomPos, playerRoomState) => {
+      playerRoomStats(roomPos).string = playerRoomState
+    }
+
     case _ => println("MESSAGE NOT DETECTED IN GAME")
   }
 

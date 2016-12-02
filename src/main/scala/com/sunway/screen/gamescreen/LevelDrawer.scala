@@ -16,25 +16,11 @@ object LevelDrawer {
   private val platformArray = ArrayBuffer[Physical]()
   val flag = new Flag(Vec(-100, -100), 45, 70)
 
-
-  /*
-  if (platform_inner_points.length > 4 && math.random > 0.5) {
-    val upper_platform = (math.random * 2).toInt match {
-      case 0 => infiniteUpperPlatform(platform_inner_points.init)
-      case _ => upperPlatform(platform_inner_points.init.tail)
-    }
-    addPlatform(upper_platform)
-  }
-  */
-
-
   def clearPlatform() {
     platformArray.clear()
   }
 
   def generatePlatformsInUser(): Unit = {
-    //TODO check if the method below is executed
-
     val vecLevel = convertToVec(mapInformation)
 
   }
@@ -51,9 +37,9 @@ object LevelDrawer {
 
     }
 
-    val randomIsland = Random.nextInt(mapInformation.last.size)
-    for ((lastPoly, index) <- mapInformation.last.zipWithIndex) {
-      if (index == 4) {
+    val randomIsland = Random.nextInt(mapInformation.head.size)
+    for ((lastPoly, index) <- mapInformation.head.zipWithIndex) {
+      if (index == 3) {
         createFlag(lastPoly._1, lastPoly._2)
       }
     }
@@ -67,7 +53,6 @@ object LevelDrawer {
 
   def createFlag(x: Float, y: Float): Unit = {
     flag.coord_=(Vec(x, y))
-
     MainGame.physics.addPhysical(flag)
 
   }
