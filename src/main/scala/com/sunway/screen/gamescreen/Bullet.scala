@@ -25,6 +25,7 @@ class Bullet(id: Int, init_coord: Vec, targetCoord: Vec) extends DynaBall(init_c
     val forceDeltaCoord = Vec(deltaCoord.x * 200, deltaCoord.y * 50)
     addForce(forceDeltaCoord)
     this.body.addExcludedBody(charactersObj(id).body)
+    body.addExcludedBody(LevelDrawer.flag.body)
   }
 
   private var next_frame = 0

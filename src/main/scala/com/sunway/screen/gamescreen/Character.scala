@@ -71,9 +71,9 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
       callEvent(SEND_VELOCITY, (-60.toFloat, velocity.y, body.isResting))
     },
       onKeyUp = {
-          callEvent(STOP_X_MOVEMENT)
+        body.setIsResting(true)
         callEvent(FACE_LEFT)
-          callEvent(SEND_VELOCITY, (velocity.x, velocity.y, body.isResting))
+        callEvent(SEND_VELOCITY, (0f, velocity.y, body.isResting))
       })
 
     key(KEY_D, onKeyDown = {
@@ -82,10 +82,9 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
 
 
     }, onKeyUp = {
-        callEvent(STOP_X_MOVEMENT)
+      body.setIsResting(true)
       callEvent(FACE_RIGHT)
-        callEvent(SEND_VELOCITY, (velocity.x, velocity.y, body.isResting))
-
+      callEvent(SEND_VELOCITY, (0f, velocity.y, body.isResting))
     })
 
 
@@ -108,15 +107,6 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
       }
     })
 
-
-
-    onEvent(STOP_X_MOVEMENT) {
-
-      velocity_=(Vec(0, velocity.y))
-      body.setIsResting(true)
-
-    }
-
     onEvent(SEND_COORDINATES) {
       Client.clientActor ! SendCoordinatesFromMe(body.getPosition.getX, body.getPosition.getY)
     }
@@ -131,6 +121,7 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
     onEventWithArguments(SEND_VELOCITY) {
       case (speedX: Float, speedY: Float, restingState: Boolean) => {
         velocity_=(Vec(speedX, speedY))
+        body.setIsResting(restingState)
         Client.clientActor ! SendVelocity(speedX, speedY, restingState)
       }
     }
@@ -166,12 +157,16 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
       MainGame.physics.addPhysical(bullet)
       aBulletReceived = false
     }
+    if (charID == 1) println(" velocity : " + body.getVelocity + " is resting? " + body.isResting)
   }
 
   action {
     if (isMyChar) {
+      if (body.isResting == true) callEvent(SEND_VELOCITY, (body.getVelocity.getX, body.getVelocity.getY, true))
       if (body.getVelocity.lengthSquared() != 0) callEvent(SEND_VELOCITY, (body.getVelocity.getX, body.getVelocity.getY, body.isResting))
-      else callEvent(SEND_COORDINATES)
+      else if (body.getVelocity.lengthSquared() == 0) callEvent(SEND_COORDINATES)
+
+
     }
   }
 
@@ -204,12 +199,10 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
       deleteSelfNoWarn()
     }
 
-
   }
 
   clear {
     if (User.myRoomPos.string.toInt != charID) {
-      println("Delete rendering")
       delRender(charRender)
     }
   }

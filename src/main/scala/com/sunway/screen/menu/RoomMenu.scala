@@ -7,7 +7,7 @@ import com.sunway.network.Client
 import com.sunway.network.actors.MenuActorMessages.SendRoomState
 import com.sunway.screen.gamescreen.MainGame
 import com.sunway.util.Render._
-import com.sunway.util.{ImmutableMessage, Message, MutableMessage}
+import com.sunway.util.{ImmutableMessage, Message, MutableMessage, MutableString}
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
@@ -27,19 +27,31 @@ object RoomMenu extends ScageScreen("AnotherApp") {
       new MenuEdge(Vec(200, windowHeight - 100), Vec(windowWidth - 200, windowHeight - 100)),
       new MenuEdge(Vec(windowWidth - 200, windowHeight - 100), Vec(windowWidth - 200, 100)),
       new MenuEdge(Vec(windowWidth - 200, 100), Vec(200, 100)))
+
+
   }
   val boxes = ArrayBuffer[DynaBox](
-    SubmitBox,
+    ReadyBox,
+    WaitingBox,
     CancelBox)
+
   init {
 
     stringList.++=(initMutableTexts)
     // stringList.++=(initPrefixTexts)
+
+    val renderText = render {
+      renderTextFunctions(stringList)
+    }
+
+    clear {
+      delRender(renderText)
+    }
+
+    Unit
   }
 
-  render {
-    renderTextFunctions(stringList)
-  }
+
   var stringList = ListBuffer[Message]()
   init {
     selected_box = None
@@ -52,23 +64,34 @@ object RoomMenu extends ScageScreen("AnotherApp") {
     selected_box = boxes.find(p => withinX(p) && withinY(p))
     selected_box match {
       case Some(box) => {
-        if (box.eq(SubmitBox)) {
-          stop()
-          println("You pressed submit!")
+        if (box.eq(ReadyBox)) {
+          Client.actorServerSelect ! SendRoomState(Client.clientActor, targetRoomNum.string.toInt, myRoomPos.string.toInt, User.READY_STATE, " - READY")
+        }
+        else if (box.eq(WaitingBox)) {
+          Client.actorServerSelect ! SendRoomState(Client.clientActor, targetRoomNum.string.toInt, myRoomPos.string.toInt, User.WAITING_STATE, " - WAITING")
         }
         else if (box.eq(CancelBox)) {
           Client.clientSystem.stop(Client.clientActor)
           Client.createClientActor
 
-          // Client.clientActor ! RestartActor
+          resetStats
           stop()
-          println("You pressed cancel!")
+
+          def resetStats: Unit = {
+            stringList.clear()
+            playerNames = Array.fill[MutableString](maxPlayerInRoom)(new MutableString(""))
+            playerRoomStats = Array.fill[MutableString](maxPlayerInRoom)(new MutableString(""))
+            myRoomPos.string = ""
+            //TODO fix the string below
+            targetRoomNum.string = "0"
+
+            for (play <- playerNames)
+              println("condition of play names ON DELETE  " + play.string)
+          }
         }
       }
       case None => selected_box = boxes.find(p => withinX(p) && withinY(p))
-
     }
-
     def withinX(p: DynaBox): Boolean = (m.x < p.coord.x + p.box_width - p.box_width / 2) && (m.x > p.coord.x - p.box_width / 2)
     def withinY(p: DynaBox): Boolean = m.y < p.coord.y + p.box_height - p.box_height / 2 && m.y > p.coord.y - p.box_height / 2
 
@@ -76,7 +99,6 @@ object RoomMenu extends ScageScreen("AnotherApp") {
 
 
     key(KEY_R, onKeyDown = {
-      println("YOU PRESSED R")
       Client.actorServerSelect ! SendRoomState(Client.clientActor, targetRoomNum.string.toInt, myRoomPos.string.toInt, User.READY_STATE, " - READY")
     })
     key(KEY_W, onKeyDown = {
@@ -100,6 +122,9 @@ object RoomMenu extends ScageScreen("AnotherApp") {
       mutableTexts += MutableMessage(playerNames(pos), playerTextPosition(pos))
       mutableTexts += MutableMessage(playerRoomStats(pos), playerStatsTextPosition(pos))
     }
+
+    for (play <- playerNames)
+      println("condition of play names  " + play.string)
 
     return mutableTexts
   }
@@ -127,13 +152,19 @@ class MenuEdge(from: Vec, to: Vec) extends StaticLine(from, to) {
   }
 }
 
-object SubmitBox extends DynaBox(Vec(420, 30), 70f, 70f, box_mass = 1000f, restitution = false) {
+object ReadyBox extends DynaBox(Vec(420, 30), 70f, 70f, box_mass = 1000f, restitution = false) {
   render {
     drawPolygon(points, WHITE)
   }
 }
 
 object CancelBox extends DynaBox(Vec(50, 30), 70f, 70f, box_mass = 1000f, restitution = false) {
+  render {
+    drawPolygon(points, WHITE)
+  }
+}
+
+object WaitingBox extends DynaBox(Vec(235, 30), 70f, 70f, box_mass = 1000f, restitution = false) {
   render {
     drawPolygon(points, WHITE)
   }

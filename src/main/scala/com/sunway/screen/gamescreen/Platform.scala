@@ -11,6 +11,10 @@ import com.sunway.screen.gamescreen.MainGame._
 
 class Platform(platform_points: Vec*) extends StaticPolygon(platform_points: _*) {
 
+  init {
+
+    body.setRestitution(0f)
+  }
   private val render_id = render {
     if (physics.containsPhysical(this)) drawPolygon(points, /*platform_color*/ BLACK)
     else {

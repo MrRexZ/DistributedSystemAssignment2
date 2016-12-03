@@ -18,8 +18,8 @@ object MainGame extends ScageScreen("Main Screen") {
   private val log = MySimpleLogger(this.getClass.getName)
   private var uke_speed = 30
   private var farthest_coord = Vec.zero
-  private var NO_NEED_REPLY = 0
-  private var NEED_REPLY = 1
+  val MATCH_PROGRESS = 0
+  val MATCH_END = 1
 
   var won = false
   var lost = false
@@ -116,19 +116,24 @@ object MainGame extends ScageScreen("Main Screen") {
         }
       }
 
-  keyIgnorePause(KEY_P, onKeyDown = {
+  keyIgnorePause(KEY_ESCAPE, onKeyDown = {
     pauseOff()
+  })
+
+  key(KEY_P, onKeyDown = {
+    goBackScreen(MATCH_PROGRESS)
   })
 
   action {
     if (goBack) {
-      goBackScreen
+      goBackScreen(MATCH_END)
       goBack = false
     }
     if (myChar.coord.y < -50) {
       callEvent("RESET POS")
     }
-    }
+
+  }
 
   onEvent("RESET POS") {
     myChar.coord_=(Vec(20, windowHeight / 2 - 70))
@@ -137,8 +142,10 @@ object MainGame extends ScageScreen("Main Screen") {
     Client.clientActor ! SendCoordinatesFromMe(myChar.body.getPosition.getX, myChar.body.getPosition.getY)
   }
 
-  private def goBackScreen {
-    Client.clientActor ! ChangeMenuState()
+  private def goBackScreen(option: Int) {
+    if (option == MATCH_PROGRESS) Client.clientActor ! RemoveMyCharacterObject()
+
+    Client.clientActor ! ChangeMenuState(option)
     backgroundColor = BLACK
     MainGame.clear()
     MainGame.stop()

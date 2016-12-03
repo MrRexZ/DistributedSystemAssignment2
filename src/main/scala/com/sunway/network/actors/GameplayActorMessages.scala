@@ -20,6 +20,8 @@ object GameplayActorMessages {
 
   case class CreateCharacter(playerPos: Int, coordX: Float, coordY: Float)
 
+  case class RemoveMyCharacterObject()
+
   case class RemovePlayer(playerPos: Int)
 
   case class CreateCharacterFromMe(coordX: Float, coordY: Float)
@@ -54,7 +56,7 @@ object GameplayActorMessages {
 
   case class InformWinState()
 
-  case class ChangeMenuState()
+  case class ChangeMenuState(option: Int)
 
   case class SendMapData(mapCoordinates: List[ArrayBuffer[Tuple2[Float, Float]]])
 

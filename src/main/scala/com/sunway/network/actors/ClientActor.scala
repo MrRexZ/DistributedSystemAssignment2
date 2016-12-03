@@ -24,7 +24,6 @@ class ClientActor extends Actor {
   //TODO work on remotely getting the data
   var clientsActorRef: ListBuffer[Option[ActorRef]] = null
 
-  var inRoom: Boolean = false
   var latestServerReply: String = ""
 
   def receive = {
@@ -96,7 +95,6 @@ class ClientActor extends Actor {
 
   def assignNameToRoom(roomNum: Int, playerRoomID: Int, actorRefList: List[Option[ActorRef]]): Unit = {
     try {
-      inRoom = true
       targetRoomNum.string = roomNum.toString
       ActorsUtil.updateMembersNameList(actorRefList)
       myRoomPos.string = playerRoomID.toString
@@ -125,7 +123,7 @@ class ClientActor extends Actor {
     case UpdateClientsListNewPlayerInGame(roomMembers, playerPos) => {
       clientsActorRef = roomMembers
       ActorsUtil.updateMembersNameList(roomMembers.toList)
-      self ! CreateCharacter(playerPos, 50, 100)
+      self ! CreateCharacter(playerPos, 50, 200)
     }
 
     case CreateCharacter(playerPos, coordX, coordY) => {
@@ -142,14 +140,14 @@ class ClientActor extends Actor {
     }
 
     case SendCoordinatesToTarget(posX, posY, fromPlayer) => {
-      if (charactersObj(fromPlayer) != null) charactersObj(fromPlayer).body.setPosition(posX, posY)
+      if (charactersObj(fromPlayer) != null) {
+        charactersObj(fromPlayer).body.setPosition(posX, posY)
+      }
     }
     case UpdateVelocity(speedX, speedY, restingState, fromPlayer) => {
       if (charactersObj(fromPlayer) != null) {
-
-        var charToUpdate = charactersObj(fromPlayer)
-        charToUpdate.velocity_=(Vec(speedX, speedY))
-        charToUpdate.body.setIsResting(restingState)
+        charactersObj(fromPlayer).velocity_=(Vec(speedX, speedY))
+        charactersObj(fromPlayer).body.setIsResting(restingState)
       }
     }
 
@@ -167,7 +165,6 @@ class ClientActor extends Actor {
 
     case UpdateClientsListRemovePlayerInGame(clientActors, removedPlayer) => {
 
-      println("REMOVING PLAYER OUTSIDE")
       self ! RemovePlayer(removedPlayer)
       ActorsUtil.updateMembersNameList(clientActors.toList)
     }
@@ -180,15 +177,27 @@ class ClientActor extends Actor {
     case UpdateDirectionFromMe(previousXSpeed) => sendMessagesToAllClientsNotMe(UpdateDirection(previousXSpeed, myRoomPos.string.toInt), clientsActorRef.toList, self)
     case CreateBulletFromMe(coordX, coordY, targetCoorX, targetCoorY) => sendMessagesToAllClientsNotMe(CreateBullet(myRoomPos.string.toInt, coordX, coordY, targetCoorX, targetCoorY), clientsActorRef.toList, self)
     case InformWinState() => sendMessagesToAllClientsNotMe(InformLost(myRoomPos.string.toInt), clientsActorRef.toList, self)
-    case ChangeMenuState() => {
+    case ChangeMenuState(matchState) => {
       gameState = WAITING_STATE
       mapState = WAITING_STATE
       readyPlay = false
       context.become(receive)
-      Client.actorServerSelect ! UpdateRoomToMenuStage(targetRoomNum.string.toInt)
       Client.actorServerSelect ! SendRoomState(self, targetRoomNum.string.toInt, myRoomPos.string.toInt, User.WAITING_STATE, " - WAITING")
-      sendMessagesToAllClientsNotMe(ChangeMenuState(), clientsActorRef.toList, self)
+
+      println("no people left : " + ifNoPeopleLeft)
+      if (matchState == MainGame.MATCH_END || ifNoPeopleLeft) {
+        Client.actorServerSelect ! UpdateRoomToMenuStage(targetRoomNum.string.toInt)
+        sendMessagesToAllClientsNotMe(ChangeMenuState(matchState), clientsActorRef.toList, self)
+      }
     }
+
+      def ifNoPeopleLeft: Boolean = {
+        for (client <- clientsActorRef) {
+          if (!client.isEmpty && !client.get.equals(self)) return false
+        }
+
+        true
+      }
 
     case UpdatePlayerTextState(roomPos, playerRoomState) => {
       playerRoomStats(roomPos).string = playerRoomState
@@ -205,11 +214,19 @@ class ClientActor extends Actor {
     }
 
     case AskCharObject(clientRef) => {
-      clientRef ! CreateCharacter(myRoomPos.string.toInt, charactersObj(myRoomPos.string.toInt).coord.x, charactersObj(myRoomPos.string.toInt).coord.y)
+      if (charactersObj(myRoomPos.string.toInt) != null) clientRef ! CreateCharacter(myRoomPos.string.toInt, charactersObj(myRoomPos.string.toInt).coord.x, charactersObj(myRoomPos.string.toInt).coord.y)
     }
 
     case SendMyCharacterObject(playerPos, x, y) => {
       sendMessagesToAllClientsNotMe(AskCharObject(self), clientsActorRef.toList, self)
+    }
+
+    case RemoveMyCharacterObject() => {
+      sendMessagesToAllClientsNotMe(RemovePlayer(myRoomPos.string.toInt), clientsActorRef.toList, self)
+    }
+
+    case UpdateClientsList(roomMembers) => {
+      clientsActorRef = roomMembers
     }
 
     case _ => println("MESSAGE NOT DETECTED IN GAME")

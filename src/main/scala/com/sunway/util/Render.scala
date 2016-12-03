@@ -9,8 +9,6 @@ import scala.collection.mutable.ListBuffer
   */
 object Render {
   def renderTextFunctions(stringList: ListBuffer[Message]) {
-
     stringList foreach (obj => print(obj.getMessage, obj.getVectorPos, GREEN))
-
   }
 }

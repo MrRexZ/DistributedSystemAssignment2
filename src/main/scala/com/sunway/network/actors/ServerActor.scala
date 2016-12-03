@@ -136,6 +136,16 @@ class ServerActor extends Actor {
     }
 
 
+    /*
+  case UpdateClientRoomStateInServer(roomNum, roomPos, playerRoomState) => {
+    clientRoomState(roomNum).update(roomPos, playerRoomState)
+  }
+
+  case GetClientRoomStateInServer(roomNum, roomPos, playerRoomState) => {
+    sender ! clientRoomState(roomNum)
+  }
+*/
+
     case BeAskedRoomIsPlaying(roomNum) => sender ! roomIsPlaying(roomNum)
 
     case DistributeMessageToAllClients(message, roomNum) => {
