@@ -38,7 +38,9 @@ object MainGame extends ScageScreen("Main Screen") {
 
   preinit {
     physics.addPhysical(myChar)
-    Client.clientActor ! SendMyCharacterObject(myRoomPos.string.toInt, myChar.coord.x, myChar.coord.y)
+    do {
+      Client.clientActor ! SendMyCharacterObject(myRoomPos.string.toInt, myChar.coord.x, myChar.coord.y)
+    } while (charactersObj(myRoomPos.string.toInt) == null)
   }
 
   action {

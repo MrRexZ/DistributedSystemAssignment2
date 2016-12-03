@@ -1,6 +1,7 @@
 package com.sunway.network.actors
 
 import akka.actor.{Actor, ActorIdentity, ActorRef, Cancellable, Identify, Props}
+import com.sunway.model.Database._
 import com.sunway.model.User._
 import com.sunway.network.actors.ActorsUtil._
 import com.sunway.network.actors.GameplayActorMessages.UpdateClientsListRemovePlayerInGame
@@ -42,7 +43,9 @@ class HeartbeatActor(roomNum: Int, interval: Int, clientActors: ListBuffer[Optio
       println("REMOVING ACTOR : " + playerID.toString.toInt + " and " + clientActors(playerID.toString.toInt).get)
       schedulerList(playerID.toString.toInt).cancel()
       removeActor
-      if (allActorsDead) context.stop(self)
+
+      //TODO ACTIVATE THIS LINE BELOW LATER
+      //if (allActorsDead) context.stop(self)
 
 
       def allActorsDead: Boolean = {
@@ -56,8 +59,11 @@ class HeartbeatActor(roomNum: Int, interval: Int, clientActors: ListBuffer[Optio
       def removeActor {
         val removedPlayer: Int = playerID.toString.toInt
         clientActors.update(removedPlayer, None)
-        if (!ActorsUtil.allMembersReady(roomNum)) sendMessageToAllMembers(UpdateClientsList(clientActors), roomNum)
-        else sendMessageToAllMembers(UpdateClientsListRemovePlayerInGame(clientActors, removedPlayer), roomNum)
+        roomActorRefPair(roomNum).update(removedPlayer, None)
+        if (!roomIsPlaying.get(roomNum).isEmpty) {
+          sendMessageToAllMembers(UpdateClientsListRemovePlayerInGame(clientActors, removedPlayer), roomNum)
+        }
+        else sendMessageToAllMembers(UpdateClientsList(clientActors), roomNum)
 
       }
     }

@@ -41,10 +41,7 @@ object ActorsUtil {
 
   def allMembersReady(roomNum: Int): Boolean = {
     for ((client, index) <- roomActorRefPair(roomNum).zipWithIndex) {
-      if (client.isEmpty) println("nothing")
-      else {
-        if (clientRoomState(roomNum)(index) == WAITING_STATE) return false
-      }
+      if (!client.isEmpty && clientRoomState(roomNum)(index) == WAITING_STATE) return false
     }
     true
   }

@@ -214,7 +214,7 @@ class ClientActor extends Actor {
     }
 
     case AskCharObject(clientRef) => {
-      if (charactersObj(myRoomPos.string.toInt) != null) clientRef ! CreateCharacter(myRoomPos.string.toInt, charactersObj(myRoomPos.string.toInt).coord.x, charactersObj(myRoomPos.string.toInt).coord.y)
+      clientRef ! CreateCharacter(myRoomPos.string.toInt, charactersObj(myRoomPos.string.toInt).coord.x, charactersObj(myRoomPos.string.toInt).coord.y)
     }
 
     case SendMyCharacterObject(playerPos, x, y) => {

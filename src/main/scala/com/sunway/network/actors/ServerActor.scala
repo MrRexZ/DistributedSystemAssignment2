@@ -136,6 +136,8 @@ class ServerActor extends Actor {
     }
 
 
+
+    //TODO call this message below when update of a roomstate occurs
     /*
   case UpdateClientRoomStateInServer(roomNum, roomPos, playerRoomState) => {
     clientRoomState(roomNum).update(roomPos, playerRoomState)
@@ -154,14 +156,14 @@ class ServerActor extends Actor {
 
     case AllPlayerReceivedMap(roomNum) => {
       //TODO change the size of array below to maxPlayerInRoom
-      val tempMapState = Array.fill[Int](calculateValueWithSome(roomNum))(WAITING_STATE)
+      val tempMapState = Array.fill[Int](maxPlayerInRoom)(WAITING_STATE)
       val tempClientsList = roomActorRefPair(roomNum)
       for ((clientRefOpt, i) <- roomActorRefPair(roomNum).zipWithIndex
            if !clientRefOpt.isEmpty) {
         (clientRefOpt.get ? BeAskedMapState).mapTo[Int].onComplete {
           case Success(state) => {
             tempMapState(i) = state
-            if (allMapReadyState(tempMapState)) {
+            if (allMapReadyState(tempMapState, roomActorRefPair(roomNum))) {
               for (clientRef <- tempClientsList
                    if !clientRef.isEmpty) {
                 clientRef.get ! BeAskedPlay()
@@ -178,14 +180,19 @@ class ServerActor extends Actor {
 
   def calculateValueWithSome(roomNum: Int): Int = {
     var counter = 0
+
     for (i <- roomActorRefPair(roomNum)
-         if !i.isEmpty) counter += 1
+         if !i.isEmpty) {
+      counter += 1
+      println("i is " + i)
+    }
 
     return counter
   }
-  def allMapReadyState(tempMapState: Array[Int]): Boolean = {
-    for (state <- tempMapState) {
-      if (state == WAITING_STATE) return false
+
+  def allMapReadyState(tempMapState: Array[Int], tempMembersList: ListBuffer[Option[ActorRef]]): Boolean = {
+    for ((state, index) <- tempMapState.zipWithIndex) {
+      if (state == WAITING_STATE && !tempMembersList(index).isEmpty) return false
     }
     return true
   }
