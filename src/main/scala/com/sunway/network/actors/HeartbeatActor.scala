@@ -35,15 +35,12 @@ class HeartbeatActor(roomNum: Int, interval: Int, clientActors: ListBuffer[Optio
 
 
     case ActorIdentity(playerID, Some(actorRef)) => {
-      //  println("AFTER UPDATE : " + Database.roomActorRefPair)
     }
 
 
     case ActorIdentity(playerID, None) => {
-      println("REMOVING ACTOR : " + playerID.toString.toInt + " and " + clientActors(playerID.toString.toInt).get)
       schedulerList(playerID.toString.toInt).cancel()
       removeActor
-
       if (allActorsDead) {
         context.stop(self)
         roomActorRefPair.remove(roomNum)
@@ -69,7 +66,7 @@ class HeartbeatActor(roomNum: Int, interval: Int, clientActors: ListBuffer[Optio
       }
     }
 
-    case _ => println("what?\n")
+    case _ => println("MESSAGE NOT DETECTED IN HEARTBEAT ACTOR?\n")
 
   }
 

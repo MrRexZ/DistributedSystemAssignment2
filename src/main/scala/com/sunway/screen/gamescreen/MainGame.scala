@@ -28,9 +28,10 @@ object MainGame extends ScageScreen("Main Screen") {
   preinit {
     try
       charactersObj(myRoomPos.string.toInt) = new Character(charactersPos(myRoomPos.string.toInt), myRoomPos.string.toInt)
-    finally
+    finally {
       Client.clientActor ! SendMyCharacterObject(myRoomPos.string.toInt, charactersObj(myRoomPos.string.toInt).coord.x, charactersObj(myRoomPos.string.toInt).coord.y)
-
+      println("SENT MY CHARACTER OBJ")
+    }
 
   }
 

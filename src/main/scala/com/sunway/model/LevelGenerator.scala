@@ -4,7 +4,9 @@ import akka.actor.ActorRef
 import akka.pattern.ask
 import com.github.dunnololda.scage.ScageLib._
 import com.sunway.model.User.timeout
-import com.sunway.network.actors.GameplayActorMessages.{SendMapData, SendMapState}
+import com.sunway.network.Server
+import com.sunway.network.actors.GameplayActorMessages.SendMapData
+import com.sunway.network.actors.MenuActorMessages.AllPlayerReceivedMap
 import com.sunway.screen.gamescreen.Platform
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
@@ -92,9 +94,9 @@ class LevelGenerator(roomNum: Int, clientsList: ListBuffer[Option[ActorRef]]) {
          if !clientRef.isEmpty) {
       val futureSendMap: Future[Int] = (clientRef.get ? SendMapData(_platformsPoints.toList)).mapTo[Int]
       futureSendMap onComplete {
-        case Success(state) => {
-          println("SUCCESS!!")
-          clientRef.get ! SendMapState(state)
+        case Success(roomNum) => {
+
+          Server.serverActor ! AllPlayerReceivedMap(roomNum)
         }
         case Failure(state) => {
           println("ERROR IN MAP STATE : " + state)

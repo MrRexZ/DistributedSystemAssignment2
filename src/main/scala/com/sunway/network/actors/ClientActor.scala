@@ -61,18 +61,14 @@ class ClientActor extends Actor {
     case StartGame(membersRoomList) => {
       gameState = READY_STATE
       clientsActorRef = membersRoomList
-      println("MORE THE STATE : " + clientsActorRef)
     }
 
     case SendMapData(mapCoordinates) => {
       mapInformation = mapCoordinates
-      sender ! READY_STATE
+      mapState = READY_STATE
+      sender ! targetRoomNum.string.toInt
     }
 
-    case SendMapState(state) => {
-      mapState = state
-      Client.actorServerSelect ! AllPlayerReceivedMap(targetRoomNum.string.toInt)
-    }
 
     case BeAskedRoomState(playerPos) => {
       sender ! gameState
@@ -90,7 +86,7 @@ class ClientActor extends Actor {
 
     //   case RestartActor => throw new IllegalStateException()
 
-    case _ => println("MESSAGE UNKNOWN")
+    case _ => println("MESSAGE UNKNOWN IN CLIENT ROOM STATE BEHAVIOUR")
   }
 
   def assignNameToRoom(roomNum: Int, playerRoomID: Int, actorRefList: List[Option[ActorRef]]): Unit = {
@@ -214,7 +210,9 @@ class ClientActor extends Actor {
     }
 
     case AskMyCharObject(clientRef) => {
-      clientRef ! CreateCharacter(myRoomPos.string.toInt, charactersObj(myRoomPos.string.toInt).coord.x, charactersObj(myRoomPos.string.toInt).coord.y)
+      do {
+        if (charactersObj(myRoomPos.string.toInt) != null) clientRef ! CreateCharacter(myRoomPos.string.toInt, charactersObj(myRoomPos.string.toInt).coord.x, charactersObj(myRoomPos.string.toInt).coord.y)
+      } while (charactersObj(myRoomPos.string.toInt) == null)
     }
 
     case SendMyCharacterObject(playerPos, x, y) => {

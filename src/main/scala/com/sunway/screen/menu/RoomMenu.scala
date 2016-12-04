@@ -83,8 +83,7 @@ object RoomMenu extends ScageScreen("AnotherApp") {
             playerRoomStats = Array.fill[MutableString](maxPlayerInRoom)(new MutableString(""))
             myRoomPos.string = ""
             roomStateSeenUser.string = "WAITING STATE"
-            //TODO fix the string below
-            targetRoomNum.string = "0"
+
 
             for (play <- playerNames)
               println("condition of play names ON DELETE  " + play.string)

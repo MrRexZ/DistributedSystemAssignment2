@@ -10,7 +10,7 @@ import com.sunway.model.User._
 import com.sunway.model.{ConfigurationObject, LevelGenerator}
 import com.sunway.network.Server._
 import com.sunway.network.actors.ActorsUtil._
-import com.sunway.network.actors.GameplayActorMessages.{DistributeMessageToAllClients, SendMapData, SendMapState, UpdateClientsListNewPlayerInGame}
+import com.sunway.network.actors.GameplayActorMessages.{DistributeMessageToAllClients, SendMapData, UpdateClientsListNewPlayerInGame}
 import com.sunway.network.actors.MenuActorMessages._
 
 import scala.collection.mutable.ListBuffer
@@ -31,16 +31,14 @@ class ServerActor extends Actor {
       if (!validUsers(userName, password)) sender ! RejectPlayer(" WRONG PASSWORD ")
       else {
         //TODO uncomment this line later!!
-        // val roomNum = generateRoomNum().toString
-        val roomNum = 0
+        val roomNum = generateRoomNum()
+
         registerRoom(roomNum, actorRef)
         val currentRoomList = roomActorRefPair(roomNum)
 
         val heartbeatActor = serverSystem.actorOf(HeartbeatActor.props(roomNum, 500, currentRoomList), name = roomNum.toString)
         heartBeatActorRef.put(roomNum, heartbeatActor)
         sender ! AcceptPlayerAsHost(roomNum, HOST_ROOM_ID, currentRoomList.toList)
-
-        println("Player received")
       }
 
 
@@ -85,19 +83,7 @@ class ServerActor extends Actor {
     case SendRoomState(clientRef: ActorRef, roomNum: Int, roomPos: Int, playerRoomState: Int, text: String) => {
       clientRoomState(roomNum).update(roomPos, playerRoomState)
       implicit val timeout = Timeout(5.seconds)
-      val askTargetName: Future[String] = (clientRef ? BeAskedUsername).mapTo[String]
-
-      askTargetName onSuccess {
-        case targetName => {
-          for (client <- roomActorRefPair(roomNum)
-               if !client.isEmpty) {
-            client.get ! UpdatePlayerTextState(roomPos, text)
-          }
-        }
-      }
-
-      println("all members ready " + allMembersReady(roomNum))
-
+      sendMessageToAllMembers(UpdatePlayerTextState(roomPos, text), roomNum)
       if (playerRoomState == READY_STATE)
       if (allMembersReady(roomNum) && roomIsPlaying.get(roomNum).isEmpty) {
         roomIsPlaying.put(roomNum, true)
@@ -118,9 +104,9 @@ class ServerActor extends Actor {
 
           val futureSendMap: Future[Int] = (clientRef ? SendMapData(temporaryMap(roomNum))).mapTo[Int]
           futureSendMap onComplete {
-            case Success(state) => {
+            case Success(roomNum) => {
               println("SUCCESS SENDING MAP TO NEW PLAYER!!")
-              clientRef ! SendMapState(state)
+              self ! AllPlayerReceivedMap(roomNum)
             }
             case Failure(state) => {
               println("ERROR IN MAP STATE NEW PLAYER : " + state)
@@ -134,7 +120,6 @@ class ServerActor extends Actor {
 
 
     //TODO call this message below when update of a roomstate occurs
-
     /*
 case UpdateClientRoomStateInServer(roomNum, roomPos, playerRoomState) => {
   clientRoomState(roomNum).update(roomPos, playerRoomState)
@@ -152,7 +137,6 @@ case GetClientRoomStateInServer(roomNum, roomPos, playerRoomState) => {
     }
 
     case AllPlayerReceivedMap(roomNum) => {
-      //TODO change the size of array below to maxPlayerInRoom
       val tempMapState = Array.fill[Int](maxPlayerInRoom)(WAITING_STATE)
       val tempClientsList = roomActorRefPair(roomNum)
       for ((clientRefOpt, i) <- roomActorRefPair(roomNum).zipWithIndex
@@ -174,18 +158,6 @@ case GetClientRoomStateInServer(roomNum, roomPos, playerRoomState) => {
     }
   }
 
-
-  def calculateValueWithSome(roomNum: Int): Int = {
-    var counter = 0
-
-    for (i <- roomActorRefPair(roomNum)
-         if !i.isEmpty) {
-      counter += 1
-      println("i is " + i)
-    }
-
-    return counter
-  }
 
   def allMapReadyState(tempMapState: Array[Int], tempMembersList: ListBuffer[Option[ActorRef]]): Boolean = {
     for ((state, index) <- tempMapState.zipWithIndex) {
