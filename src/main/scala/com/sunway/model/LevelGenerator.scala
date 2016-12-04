@@ -17,7 +17,7 @@ import scala.util.{Failure, Random, Success}
   */
 class LevelGenerator(roomNum: Int, clientsList: ListBuffer[Option[ActorRef]]) {
 
-  val ukeSpeed = 30
+  val constant_default_char_speed = 30
   val radius = 30
   private val _platformsPoints = ArrayBuffer[ArrayBuffer[Tuple2[Float, Float]]]()
 
@@ -25,33 +25,40 @@ class LevelGenerator(roomNum: Int, clientsList: ListBuffer[Option[ActorRef]]) {
 
   def genLevel(i: Int, limit: Int, start: Vec, current_width: Int, required_width: Int, current_height: Int): Unit = {
     if (i < limit) {
-      genHorLevel(0, limit, Random.nextInt(4) + 1, start, current_width, required_width, current_height, i)
-      val random_height = (Random.nextInt(5) * 10).toInt + 2 * ukeSpeed + 60
+      genHorLevel(0, i, Random.nextInt(4) + 1, start, current_width, required_width, current_height, i)
+      val random_height = (Random.nextInt(5) * 10).toInt + 2 * constant_default_char_speed + 60
       genLevel(i + 1, limit, start + Vec(0, current_height + random_height), current_width, required_width, current_height + random_height)
     }
 
   }
 
-  def genHorLevel(i: Int, limit: Int, horizontalLimit: Int, start: Vec, current_width: Int, required_width: Int, current_height: Int, heightID: Int) {
+  def genHorLevel(i: Int, verticalLevel: Int, horizontalLimit: Int, start: Vec, current_width: Int, required_width: Int, current_height: Int, heightID: Int) {
     if (i < horizontalLimit) {
-      val random_width = (math.random * 90).toInt + 2 * ukeSpeed + 600 - (heightID * 150)
+      val random_width = (math.random * 90).toInt + 2 * constant_default_char_speed + 600 - (heightID * 150)
       val leftup_coord = if (start.x != 0) start + Vec(Random.nextInt(100) + 80, Random.nextInt(40) + 40)
       else start
 
-      val num_upper_points = 2 + (math.random * (7 + ukeSpeed / 20)).toInt
+      val num_upper_points = 2 + (math.random * (7 + constant_default_char_speed / 20)).toInt
       val platform_inner_points =
         (for (i <- 2 to num_upper_points)
           yield leftup_coord + Vec(i * random_width / num_upper_points, (-100 + math.random * 100).toInt)).toList
-      val farthest_coord = platform_inner_points.last
-      val platform_points: List[Vec] =
-        (List(leftup_coord, leftup_coord + Vec((random_width) / num_upper_points, 0)) :::
+      var farthest_coord = platform_inner_points.last
+      var platform_points: List[Vec] = (List(leftup_coord, leftup_coord + Vec((random_width) / num_upper_points, 0)))
+      if (verticalLevel == 0) {
+        farthest_coord = Vec(farthest_coord.x, platform_points(1).y)
+        val anotherfarthest_coord = Vec(farthest_coord.x - 60, farthest_coord.y)
+        platform_points = (platform_points ::: List(anotherfarthest_coord, farthest_coord) ::: List(leftup_coord + Vec(random_width, -1 * Random.nextInt(120) - 50), leftup_coord + Vec(0, -120))).reverse
+      }
+      else {
+        platform_points = (platform_points :::
           platform_inner_points :::
           List(leftup_coord + Vec(random_width, -1 * Random.nextInt(120) - 50), leftup_coord + Vec(0, -120))).reverse
+      }
 
       addPlatformPoints(platform_points)
 
 
-      genHorLevel(i + 1, limit, horizontalLimit, farthest_coord, current_width + random_width + leftup_coord.ix - start.ix, required_width, current_height, heightID)
+      genHorLevel(i + 1, verticalLevel, horizontalLimit, farthest_coord, current_width + random_width + leftup_coord.ix - start.ix, required_width, current_height, heightID)
     }
   }
 

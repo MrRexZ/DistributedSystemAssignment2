@@ -23,8 +23,6 @@ import scala.util.{Failure, Random, Success}
   */
 class ServerActor extends Actor {
 
-
-
   def receive = {
     case SendRequestCreateRoom(actorRef, userName, password) => {
 
@@ -48,7 +46,6 @@ class ServerActor extends Actor {
 
 
       def registerRoom(roomNum: Int, clientRef: ActorRef) {
-        roomNumList += roomNum
         roomActorRefPair.put(roomNum, ListBuffer(Some(actorRef), None))
         clientRoomState.put(roomNum, ListBuffer(WAITING_STATE, WAITING_STATE))
       }
@@ -132,7 +129,6 @@ class ServerActor extends Actor {
         }
       }
 
-
     }
 
 
@@ -199,7 +195,7 @@ case GetClientRoomStateInServer(roomNum, roomPos, playerRoomState) => {
   }
 
 
-  def containsRoom(roomNum: Int): Boolean = roomNumList.contains(roomNum.toInt)
+  def containsRoom(roomNum: Int): Boolean = !roomActorRefPair.get(roomNum).isEmpty
 
   def validUsers(userName: String, password: String): Boolean = {
     userNameToPassword.get(userName).get.equals(password)
@@ -251,7 +247,7 @@ case GetClientRoomStateInServer(roomNum, roomPos, playerRoomState) => {
 
   def generateRoomNum(): Int = {
     var genRoom: Int = Random.nextInt(1000)
-    while (roomNumList.contains(genRoom)) {
+    while (roomActorRefPair.contains(genRoom)) {
       genRoom = Random.nextInt(1000)
     }
     genRoom

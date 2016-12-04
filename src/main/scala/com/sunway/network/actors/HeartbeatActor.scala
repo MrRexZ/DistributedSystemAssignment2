@@ -44,8 +44,13 @@ class HeartbeatActor(roomNum: Int, interval: Int, clientActors: ListBuffer[Optio
       schedulerList(playerID.toString.toInt).cancel()
       removeActor
 
-      //TODO ACTIVATE THIS LINE BELOW LATER
-      //if (allActorsDead) context.stop(self)
+      if (allActorsDead) {
+        context.stop(self)
+        roomActorRefPair.remove(roomNum)
+        clientRoomState.remove(roomNum)
+        temporaryMap.remove(roomNum)
+        roomIsPlaying.remove(roomNum)
+      }
 
 
       def allActorsDead: Boolean = {

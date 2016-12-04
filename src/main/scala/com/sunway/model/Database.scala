@@ -25,6 +25,5 @@ object Database {
   var actorReftoUsername: BiMap[ActorRef, String] = HashBiMap.create()
 
 
-  var roomNumList = Set[Integer]()
 
 }

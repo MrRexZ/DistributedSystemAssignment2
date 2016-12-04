@@ -27,9 +27,11 @@ object MainMenu extends ScageScreen("Scage App") {
   backgroundColor = BLACK
   val createRoomText = ImmutableMessage("Create Room", Vec(-50, 35))
   val joinRoomText = ImmutableMessage("Join Room", Vec(-50, -35))
-  val editNameText = ImmutableMessage("Press F1 to edit name", Vec(200, 210))
+  val editNameText = ImmutableMessage("Press F1 to edit name", Vec(130, 210))
+  val editPasswordText = ImmutableMessage("Press F2 to edit password", Vec(105, 190))
+  val editTargetRoomText = ImmutableMessage("Press F3 to change target room", Vec(60, 170))
   var playerNameText = MutableMessage(myName, Vec(-320, -240))
-  var stringList = ListBuffer[Message](createRoomText, joinRoomText, playerNameText, editNameText)
+  var stringList = ListBuffer[Message](createRoomText, joinRoomText, playerNameText, editNameText, editPasswordText, editTargetRoomText)
   private var selected_box: Option[DynaBox] = None
   private val boxes = ArrayBuffer[DynaBox](
     CreateRoomBox,
@@ -71,11 +73,8 @@ object MainMenu extends ScageScreen("Scage App") {
     checkType(AcceptPlayerAsHost, serverReply)
   }
 
-  //TODO Optimize this part!!
   def checkType[T: TypeTag](obj: T, serverReply: ServerReply) = {
-
     if (serverReply.isInstanceOf[RejectPlayer]) JOptionPane.showMessageDialog(null, serverReply.asInstanceOf[RejectPlayer].reason);
-
     else {
 
       if (serverReply.isInstanceOf[AcceptPlayerAsHost]) Client.clientActor ! serverReply.asInstanceOf[AcceptPlayerAsHost]

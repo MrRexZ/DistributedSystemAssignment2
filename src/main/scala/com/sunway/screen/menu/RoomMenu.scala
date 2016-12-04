@@ -140,8 +140,8 @@ object RoomMenu extends ScageScreen("AnotherApp") {
     val menuTextPosition: List[Vec] = List(Vec(160, 450))
     menuTextWithPos += ImmutableMessage("Current room num is : \n At pos :\n and is at", menuTextPosition(0))
     menuTextWithPos += ImmutableMessage("Ready", Vec(405, 55))
-    menuTextWithPos += ImmutableMessage("Wait", Vec(75, 55))
-    menuTextWithPos += ImmutableMessage("Go Back", Vec(235, 55))
+    menuTextWithPos += ImmutableMessage("Go Back", Vec(75, 55))
+    menuTextWithPos += ImmutableMessage("Wait", Vec(235, 55))
 
     return menuTextWithPos
   }
