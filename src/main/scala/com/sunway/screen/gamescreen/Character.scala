@@ -8,8 +8,6 @@ import com.sunway.network.actors.GameplayActorMessages._
 import com.sunway.screen.gamescreen.MainGame._
 import com.sunway.screen.menu.RoomMenu.{action => _, actionStaticPeriod => _, init => _, key => _, leftMouse => _, render => _}
 
-import scala.collection.mutable
-
 /**
   * Created by Mr_RexZ on 11/24/2016.
   */
@@ -24,7 +22,6 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
   private val max_forward = 10
   private val forward_force = 8000
   private val downward_force = -1000
-  private val moves = mutable.HashMap[String, Boolean]("up" -> false, "left" -> false, "down" -> false, "right" -> false)
   private val STOP_X_MOVEMENT = "0"
   private val SEND_COORDINATES = "1"
   private val SEND_VELOCITY = "2"
@@ -45,26 +42,32 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
   var aBulletReceived = false
 
 
-  val initOp = init {
-    setDefaultSpeed()
-    coord = coordVec
-    velocity = Vec(ukeSpeed, 0)
+  val initChar = init {
+
+    coord_=(coordVec)
+    velocity_=(Vec(0, 0))
+    physics.addPhysical(this)
+    if (isMyChar) registerController()
+
   }
 
-  if (isMyChar) registerController()
+
 
   def isMyChar = charID == User.myRoomPos.string.toInt
 
   def registerController() {
     key(KEY_Z, onKeyDown = {
       if (num_jump == 0 && num_jump2 == 0) {
-        callEvent(SEND_FORCE, (0f, 18000f))
+        callEvent(SEND_FORCE, (0f, 13000f))
         num_jump = max_jump
       } else if (num_jump2 == 0) {
-        callEvent(SEND_FORCE, (0f, 14000f))
+        callEvent(SEND_FORCE, (0f, 10000f))
         num_jump2 = max_jump2
       }
+
     })
+
+
 
     key(KEY_A, onKeyDown = {
       body.setIsResting(false)
@@ -79,8 +82,6 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
     key(KEY_D, onKeyDown = {
       body.setIsResting(false)
       callEvent(SEND_VELOCITY, (60.toFloat, velocity.y, body.isResting))
-
-
     }, onKeyUp = {
       body.setIsResting(true)
       callEvent(FACE_RIGHT)
@@ -95,7 +96,7 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
 
     key(KEY_X, onKeyDown = {
       if (num_forward == 0) {
-        callEvent(SEND_FORCE, (forward_force.toFloat, 0f))
+        callEvent(SEND_FORCE, (previousXSpeed * forward_force.toFloat, 0f))
         num_forward = max_forward
       }
     })
@@ -107,18 +108,22 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
       }
     })
 
-    onEvent(SEND_COORDINATES) {
+    val sendCoorEvents = onEvent(SEND_COORDINATES) {
       Client.clientActor ! SendCoordinatesFromMe(body.getPosition.getX, body.getPosition.getY)
     }
 
-    onEventWithArguments(SEND_FORCE) {
+    val sendForceEvent = onEventWithArguments(SEND_FORCE) {
       case (forceX: Float, forceY: Float) => {
+        body.setIsResting(false)
         addForce(Vec(forceX, forceY))
         Client.clientActor ! SendForceFromMe(forceX, forceY)
       }
+
     }
 
-    onEventWithArguments(SEND_VELOCITY) {
+
+
+    val sendVelocityEvent = onEventWithArguments(SEND_VELOCITY) {
       case (speedX: Float, speedY: Float, restingState: Boolean) => {
         velocity_=(Vec(speedX, speedY))
         body.setIsResting(restingState)
@@ -126,21 +131,25 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
       }
     }
 
-    onEvent(FACE_LEFT) {
+    val faceLeftEvent = onEvent(FACE_LEFT) {
       previousXSpeed = -1
       Client.clientActor ! UpdateDirectionFromMe(previousXSpeed)
     }
-    onEvent(FACE_RIGHT) {
+    val faceRightEvent = onEvent(FACE_RIGHT) {
       previousXSpeed = 1
       Client.clientActor ! UpdateDirectionFromMe(previousXSpeed)
     }
 
-    onEventWithArguments(FIRE_WEAPON) {
+    val eventFireWeapon = onEventWithArguments(FIRE_WEAPON) {
       case (targetCoor: Vec) => {
         val bullet = new Bullet(User.myRoomPos.string.toInt, coord, targetCoor)
         MainGame.physics.addPhysical(bullet)
         Client.clientActor ! CreateBulletFromMe(coord.x, coord.y, targetCoor.x, targetCoor.y)
       }
+    }
+
+    clear {
+      delEvents(eventFireWeapon, faceLeftEvent, faceRightEvent, sendVelocityEvent, sendForceEvent, sendCoorEvents)
     }
   }
 
@@ -151,18 +160,17 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
     aBulletReceived = true
   }
 
-  action {
+  val bulletReceive = action {
     if (aBulletReceived == true) {
       val bullet = new Bullet(receiveBulletFrom, receiveBulletInPos, receiveBulletTargetPos)
       MainGame.physics.addPhysical(bullet)
       aBulletReceived = false
     }
-    if (charID == 1) println(" velocity : " + body.getVelocity + " is resting? " + body.isResting)
   }
 
-  action {
+
+  val charTransAction = action {
     if (isMyChar) {
-      if (body.isResting == true) callEvent(SEND_VELOCITY, (body.getVelocity.getX, body.getVelocity.getY, true))
       if (body.getVelocity.lengthSquared() != 0) callEvent(SEND_VELOCITY, (body.getVelocity.getX, body.getVelocity.getY, body.isResting))
       else if (body.getVelocity.lengthSquared() == 0) callEvent(SEND_COORDINATES)
 
@@ -171,12 +179,12 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
   }
 
 
-  actionStaticPeriod(100) {
+  val frameAction = actionStaticPeriod(100) {
     frame += 1
     if (frame >= 6) frame = 0
   }
 
-  actionStaticPeriod(200) {
+  val jumpAction = actionStaticPeriod(200) {
     if (isTouching) {
       if (num_jump > 0) num_jump -= 1
       if (num_jump2 > 0) num_jump2 -= 1
@@ -195,17 +203,23 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
       if (previousXSpeed < 0) drawDisplayList(uke_stand_left, coord)
       else if (previousXSpeed >= 0) drawDisplayList(uke_stand_right, coord)
     }
-    if (User.oldPlayerLeave == true && !User.oldPlayerPos.isEmpty && User.oldPlayerPos.get == charID) {
+
+    if (playerIsLeaving) {
+      delInit(initChar)
+      delActions(charTransAction, frameAction, jumpAction, bulletReceive)
       deleteSelfNoWarn()
     }
-
   }
+
+  def playerIsLeaving: Boolean = (User.oldPlayerLeave == true && !User.oldPlayerPos.isEmpty && User.oldPlayerPos.get == charID)
+
 
   clear {
-    if (User.myRoomPos.string.toInt != charID) {
-      delRender(charRender)
-    }
-  }
+    physics.removePhysicals(this)
+    delInit(initChar)
+    delRender(charRender)
+    delActions(charTransAction, frameAction, jumpAction, bulletReceive)
 
+  }
 
 }

@@ -55,14 +55,10 @@ class HeartbeatActor(roomNum: Int, interval: Int, clientActors: ListBuffer[Optio
         return true
       }
 
-      //TODO remove the display from player
       def removeActor {
         val removedPlayer: Int = playerID.toString.toInt
         clientActors.update(removedPlayer, None)
-        roomActorRefPair(roomNum).update(removedPlayer, None)
-        if (!roomIsPlaying.get(roomNum).isEmpty) {
-          sendMessageToAllMembers(UpdateClientsListRemovePlayerInGame(clientActors, removedPlayer), roomNum)
-        }
+        if (!roomIsPlaying.get(roomNum).isEmpty) sendMessageToAllMembers(UpdateClientsListRemovePlayerInGame(clientActors, removedPlayer), roomNum)
         else sendMessageToAllMembers(UpdateClientsList(clientActors), roomNum)
 
       }

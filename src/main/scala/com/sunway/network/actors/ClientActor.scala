@@ -21,7 +21,6 @@ import scala.collection.mutable.ListBuffer
 class ClientActor extends Actor {
   var actorServerRef: Option[ActorRef] = None;
 
-  //TODO work on remotely getting the data
   var clientsActorRef: ListBuffer[Option[ActorRef]] = null
 
   var latestServerReply: String = ""
@@ -36,9 +35,11 @@ class ClientActor extends Actor {
       assignNameToRoom(roomNum, playerRoomID, actorRefList)
     }
 
-    case AcceptPlayerAsParticipant(roomNum, playerRoomID, actorRefList) => {
+    case AcceptPlayerAsParticipant(roomNum, playerRoomID, actorRefList, roomPlayingState) => {
       latestServerReply = myName + ", you're ACCEPTED as PARTICIPANT, room num is " + roomNum + "and ROOM ID is " + playerRoomID
       println(latestServerReply)
+      if (roomPlayingState) roomStateSeenUser.string = "PLAYING STATE"
+      else roomStateSeenUser.string = "WAITING STATE"
       assignNameToRoom(roomNum, playerRoomID, actorRefList)
     }
     case RejectPlayer(message) => println(myName + ", you're rejected because" + message)
@@ -57,7 +58,6 @@ class ClientActor extends Actor {
       sender ! playerRoomStats(roomPos).string
     }
 
-    //TODO rework this when onQuit
     case StartGame(membersRoomList) => {
       gameState = READY_STATE
       clientsActorRef = membersRoomList
@@ -104,11 +104,9 @@ class ClientActor extends Actor {
     }
   }
 
-  //TODO work on this receive method. It needs constant update of the list from heartbeat!!
   def bePlayer: Actor.Receive = {
 
     case InformWon() => {
-      println("EXECUTED INFORM WON ")
       MainGame.pause()
       MainGame.won = true
     }
@@ -123,7 +121,8 @@ class ClientActor extends Actor {
     case UpdateClientsListNewPlayerInGame(roomMembers, playerPos) => {
       clientsActorRef = roomMembers
       ActorsUtil.updateMembersNameList(roomMembers.toList)
-      self ! CreateCharacter(playerPos, 50, 200)
+      val newCharPos = charactersPos(playerPos)
+      self ! CreateCharacter(playerPos, newCharPos.x, newCharPos.y)
     }
 
     case CreateCharacter(playerPos, coordX, coordY) => {
@@ -134,7 +133,6 @@ class ClientActor extends Actor {
 
 
     case RemovePlayer(playerPos) => {
-      println("REMOVING PLAYER INSIDE")
       oldPlayerLeave = true
       oldPlayerPos = Option(playerPos)
     }
@@ -177,14 +175,17 @@ class ClientActor extends Actor {
     case UpdateDirectionFromMe(previousXSpeed) => sendMessagesToAllClientsNotMe(UpdateDirection(previousXSpeed, myRoomPos.string.toInt), clientsActorRef.toList, self)
     case CreateBulletFromMe(coordX, coordY, targetCoorX, targetCoorY) => sendMessagesToAllClientsNotMe(CreateBullet(myRoomPos.string.toInt, coordX, coordY, targetCoorX, targetCoorY), clientsActorRef.toList, self)
     case InformWinState() => sendMessagesToAllClientsNotMe(InformLost(myRoomPos.string.toInt), clientsActorRef.toList, self)
+
     case ChangeMenuState(matchState) => {
       gameState = WAITING_STATE
       mapState = WAITING_STATE
       readyPlay = false
+      roomStateSeenUser.string = "WAITING STATE"
       context.become(receive)
+
+      println("no people left : " + roomStateSeenUser.string)
       Client.actorServerSelect ! SendRoomState(self, targetRoomNum.string.toInt, myRoomPos.string.toInt, User.WAITING_STATE, " - WAITING")
 
-      println("no people left : " + ifNoPeopleLeft)
       if (matchState == MainGame.MATCH_END || ifNoPeopleLeft) {
         Client.actorServerSelect ! UpdateRoomToMenuStage(targetRoomNum.string.toInt)
         sendMessagesToAllClientsNotMe(ChangeMenuState(matchState), clientsActorRef.toList, self)
@@ -195,7 +196,6 @@ class ClientActor extends Actor {
         for (client <- clientsActorRef) {
           if (!client.isEmpty && !client.get.equals(self)) return false
         }
-
         true
       }
 
@@ -213,12 +213,12 @@ class ClientActor extends Actor {
       sender ! mapState
     }
 
-    case AskCharObject(clientRef) => {
+    case AskMyCharObject(clientRef) => {
       clientRef ! CreateCharacter(myRoomPos.string.toInt, charactersObj(myRoomPos.string.toInt).coord.x, charactersObj(myRoomPos.string.toInt).coord.y)
     }
 
     case SendMyCharacterObject(playerPos, x, y) => {
-      sendMessagesToAllClientsNotMe(AskCharObject(self), clientsActorRef.toList, self)
+      sendMessagesToAllClientsNotMe(AskMyCharObject(self), clientsActorRef.toList, self)
     }
 
     case RemoveMyCharacterObject() => {
@@ -228,9 +228,7 @@ class ClientActor extends Actor {
     case UpdateClientsList(roomMembers) => {
       clientsActorRef = roomMembers
     }
-
     case _ => println("MESSAGE NOT DETECTED IN GAME")
   }
-
 
 }

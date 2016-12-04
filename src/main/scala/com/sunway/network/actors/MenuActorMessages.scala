@@ -27,7 +27,7 @@ object MenuActorMessages {
 
   case class AcceptPlayerAsHost(roomNum: Int, playerRoomID: Int, actorRefList: List[Option[ActorRef]]) extends ServerReply
 
-  case class AcceptPlayerAsParticipant(roomNum: Int, playerRoomID: Int, actorRefList: List[Option[ActorRef]]) extends ServerReply
+  case class AcceptPlayerAsParticipant(roomNum: Int, playerRoomID: Int, actorRefList: List[Option[ActorRef]], roomPlayingState: Boolean) extends ServerReply
 
   case class RejectPlayer(reason: String) extends ServerReply
 

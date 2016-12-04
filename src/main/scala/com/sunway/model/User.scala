@@ -30,6 +30,7 @@ object User {
   var gameState = WAITING_STATE
   var mapState = WAITING_STATE
   var readyPlay = false
+  var roomStateSeenUser = new MutableString("WAITING STATE")
   var newPlayerJoining = false
   var newPlayerPos: Option[Int] = None
   var newPlayerVec = Vec()

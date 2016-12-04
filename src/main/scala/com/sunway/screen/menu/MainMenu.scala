@@ -10,7 +10,7 @@ import com.sunway.network.Client
 import com.sunway.network.actors.MenuActorMessages._
 import com.sunway.util.{ImmutableMessage, Message, MutableMessage}
 
-import scala.collection.mutable.ListBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 import scala.concurrent.{Await, Future}
@@ -25,11 +25,15 @@ object MainMenu extends ScageScreen("Scage App") {
   implicit val timeout = Timeout(5.seconds)
 
   backgroundColor = BLACK
-  val createRoomText = ImmutableMessage("Create Room", Vec(-50, -5))
+  val createRoomText = ImmutableMessage("Create Room", Vec(-50, 35))
   val joinRoomText = ImmutableMessage("Join Room", Vec(-50, -35))
   val editNameText = ImmutableMessage("Press F1 to edit name", Vec(200, 210))
   var playerNameText = MutableMessage(myName, Vec(-320, -240))
   var stringList = ListBuffer[Message](createRoomText, joinRoomText, playerNameText, editNameText)
+  private var selected_box: Option[DynaBox] = None
+  private val boxes = ArrayBuffer[DynaBox](
+    CreateRoomBox,
+    JoinRoomBox)
 
   renderTextFunctions
 
@@ -70,7 +74,8 @@ object MainMenu extends ScageScreen("Scage App") {
   //TODO Optimize this part!!
   def checkType[T: TypeTag](obj: T, serverReply: ServerReply) = {
 
-    if (serverReply.isInstanceOf[RejectPlayer]) println(serverReply.asInstanceOf[RejectPlayer].reason)
+    if (serverReply.isInstanceOf[RejectPlayer]) JOptionPane.showMessageDialog(null, serverReply.asInstanceOf[RejectPlayer].reason);
+
     else {
 
       if (serverReply.isInstanceOf[AcceptPlayerAsHost]) Client.clientActor ! serverReply.asInstanceOf[AcceptPlayerAsHost]
@@ -89,11 +94,44 @@ object MainMenu extends ScageScreen("Scage App") {
   def availableSlot(roomNum: Int): Boolean = {
     val statusGroup = Client.actorServerSelect ? AskNumOfParticipants(roomNum, Client.clientActor)
     Await.result(statusGroup, 3 seconds).asInstanceOf[Boolean]
-
   }
 
+  leftMouse(onBtnDown = { m => {
+    selected_box = boxes.find(p => withinX(p) && withinY(p))
+    selected_box match {
+      case Some(box) => {
+        if (box.eq(CreateRoomBox)) {
+          connectAsHost
+        }
+        else if (box.eq(JoinRoomBox)) {
+          connectAsParticipant
+        }
+      }
+      case None => selected_box = boxes.find(p => withinX(p) && withinY(p))
+    }
+    def withinX(p: DynaBox): Boolean = (m.x < p.coord.x + p.box_width - p.box_width / 2) && (m.x > p.coord.x - p.box_width / 2)
+    def withinY(p: DynaBox): Boolean = m.y < p.coord.y + p.box_height - p.box_height / 2 && m.y > p.coord.y - p.box_height / 2
+  }
+  })
+
+
+  object CreateRoomBox extends DynaBox(Vec(330, 280), 190f, 60f, box_mass = 1000f, restitution = false) {
+    render {
+      drawPolygon(points, BLACK)
+    }
+  }
+
+  object JoinRoomBox extends DynaBox(Vec(330, 200), 190f, 60f, box_mass = 1000f, restitution = false) {
+    render {
+      drawPolygon(points, BLACK)
+    }
+  }
 
 }
+
+
+
+
 
 
 

@@ -71,7 +71,7 @@ class ServerActor extends Actor {
             updateClientsList(currentRoomMembers, actorRef)
             heartBeatActorRef.get(roomNum).get ! HeartbeatMessage(myRoomPos)
             clientRoomState(roomNum).update(myRoomPos, WAITING_STATE)
-            sender ! AcceptPlayerAsParticipant(roomNum, myRoomPos, currentRoomMembers)
+            sender ! AcceptPlayerAsParticipant(roomNum, myRoomPos, currentRoomMembers, !roomIsPlaying.get(roomNum).isEmpty)
 
           }
           case _ => sender ! RejectPlayer("Room is full ! ")
@@ -101,6 +101,7 @@ class ServerActor extends Actor {
 
       println("all members ready " + allMembersReady(roomNum))
 
+      if (playerRoomState == READY_STATE)
       if (allMembersReady(roomNum) && roomIsPlaying.get(roomNum).isEmpty) {
         roomIsPlaying.put(roomNum, true)
         sendMessageToAllMembers(StartGame(roomActorRefPair(roomNum)), roomNum)
@@ -111,7 +112,7 @@ class ServerActor extends Actor {
       }
       else if (allMembersReady(roomNum) && roomIsPlaying(roomNum) == true) {
 
-        sendMessageToAllMembers(StartGame(roomActorRefPair(roomNum)), roomNum)
+        clientRef ! StartGame(roomActorRefPair(roomNum))
         sendMessageToAllMembers(UpdateClientsListNewPlayerInGame(roomActorRefPair(roomNum), roomPos), roomNum)
         sendGeneratedMapJoiningPlayer()
 
@@ -128,7 +129,6 @@ class ServerActor extends Actor {
               println("ERROR IN MAP STATE NEW PLAYER : " + state)
             }
           }
-
         }
       }
 
@@ -138,14 +138,15 @@ class ServerActor extends Actor {
 
 
     //TODO call this message below when update of a roomstate occurs
-    /*
-  case UpdateClientRoomStateInServer(roomNum, roomPos, playerRoomState) => {
-    clientRoomState(roomNum).update(roomPos, playerRoomState)
-  }
 
-  case GetClientRoomStateInServer(roomNum, roomPos, playerRoomState) => {
-    sender ! clientRoomState(roomNum)
-  }
+    /*
+case UpdateClientRoomStateInServer(roomNum, roomPos, playerRoomState) => {
+  clientRoomState(roomNum).update(roomPos, playerRoomState)
+}
+
+case GetClientRoomStateInServer(roomNum, roomPos, playerRoomState) => {
+  sender ! clientRoomState(roomNum)
+}
 */
 
     case BeAskedRoomIsPlaying(roomNum) => sender ! roomIsPlaying(roomNum)
@@ -255,8 +256,6 @@ class ServerActor extends Actor {
     }
     genRoom
   }
-
-
 
 
 }

@@ -16,7 +16,7 @@ object GameplayActorMessages {
 
   case class SendMyCharacterObject(playerPos: Int, x: Float, y: Float)
 
-  case class AskCharObject(clientRef: ActorRef)
+  case class AskMyCharObject(clientRef: ActorRef)
 
   case class CreateCharacter(playerPos: Int, coordX: Float, coordY: Float)
 

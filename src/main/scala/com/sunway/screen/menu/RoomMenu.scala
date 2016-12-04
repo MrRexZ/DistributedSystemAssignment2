@@ -30,7 +30,7 @@ object RoomMenu extends ScageScreen("AnotherApp") {
 
 
   }
-  val boxes = ArrayBuffer[DynaBox](
+  private val boxes = ArrayBuffer[DynaBox](
     ReadyBox,
     WaitingBox,
     CancelBox)
@@ -38,7 +38,7 @@ object RoomMenu extends ScageScreen("AnotherApp") {
   init {
 
     stringList.++=(initMutableTexts)
-    // stringList.++=(initPrefixTexts)
+    stringList.++=(initPrefixTexts)
 
     val renderText = render {
       renderTextFunctions(stringList)
@@ -52,6 +52,7 @@ object RoomMenu extends ScageScreen("AnotherApp") {
   }
 
 
+
   var stringList = ListBuffer[Message]()
   init {
     selected_box = None
@@ -60,7 +61,6 @@ object RoomMenu extends ScageScreen("AnotherApp") {
 
 
   leftMouse(onBtnDown = { m => {
-    println(s"loc of x : $m.x")
     selected_box = boxes.find(p => withinX(p) && withinY(p))
     selected_box match {
       case Some(box) => {
@@ -82,6 +82,7 @@ object RoomMenu extends ScageScreen("AnotherApp") {
             playerNames = Array.fill[MutableString](maxPlayerInRoom)(new MutableString(""))
             playerRoomStats = Array.fill[MutableString](maxPlayerInRoom)(new MutableString(""))
             myRoomPos.string = ""
+            roomStateSeenUser.string = "WAITING STATE"
             //TODO fix the string below
             targetRoomNum.string = "0"
 
@@ -94,7 +95,6 @@ object RoomMenu extends ScageScreen("AnotherApp") {
     }
     def withinX(p: DynaBox): Boolean = (m.x < p.coord.x + p.box_width - p.box_width / 2) && (m.x > p.coord.x - p.box_width / 2)
     def withinY(p: DynaBox): Boolean = m.y < p.coord.y + p.box_height - p.box_height / 2 && m.y > p.coord.y - p.box_height / 2
-
   }
 
 
@@ -107,10 +107,13 @@ object RoomMenu extends ScageScreen("AnotherApp") {
 
 
     action {
-      if (User.readyPlay) MainGame.run()
+      if (User.readyPlay) {
+        try
+          User.readyPlay = false
+        finally
+          MainGame.run()
+      }
     }
-
-
   })
 
   def initMutableTexts: ListBuffer[Message] = {
@@ -123,6 +126,9 @@ object RoomMenu extends ScageScreen("AnotherApp") {
       mutableTexts += MutableMessage(playerRoomStats(pos), playerStatsTextPosition(pos))
     }
 
+    mutableTexts += MutableMessage(targetRoomNum, Vec(370, 450))
+    mutableTexts += MutableMessage(myRoomPos, Vec(250, 425))
+    mutableTexts += MutableMessage(roomStateSeenUser, Vec(250, 405))
     for (play <- playerNames)
       println("condition of play names  " + play.string)
 
@@ -131,9 +137,11 @@ object RoomMenu extends ScageScreen("AnotherApp") {
 
   def initPrefixTexts: ListBuffer[Message] = {
     val menuTextWithPos = ListBuffer[Message]()
-    val menuTextPosition: List[Vec] = List(Vec(270, 320))
-    val myRoomPosString = myRoomPos.string
-    menuTextWithPos += ImmutableMessage(s"My room : $targetRoomNum at pos : $myRoomPosString", menuTextPosition(0))
+    val menuTextPosition: List[Vec] = List(Vec(160, 450))
+    menuTextWithPos += ImmutableMessage("Current room num is : \n At pos :\n and is at", menuTextPosition(0))
+    menuTextWithPos += ImmutableMessage("Ready", Vec(405, 55))
+    menuTextWithPos += ImmutableMessage("Wait", Vec(75, 55))
+    menuTextWithPos += ImmutableMessage("Go Back", Vec(235, 55))
 
     return menuTextWithPos
   }
@@ -152,20 +160,20 @@ class MenuEdge(from: Vec, to: Vec) extends StaticLine(from, to) {
   }
 }
 
-object ReadyBox extends DynaBox(Vec(420, 30), 70f, 70f, box_mass = 1000f, restitution = false) {
+object ReadyBox extends DynaBox(Vec(430, 60), 100f, 60f, box_mass = 1000f, restitution = false) {
   render {
-    drawPolygon(points, WHITE)
+    drawPolygon(points, BLACK)
   }
 }
 
-object CancelBox extends DynaBox(Vec(50, 30), 70f, 70f, box_mass = 1000f, restitution = false) {
+object CancelBox extends DynaBox(Vec(110, 60), 100f, 60f, box_mass = 1000f, restitution = false) {
   render {
-    drawPolygon(points, WHITE)
+    drawPolygon(points, BLACK)
   }
 }
 
-object WaitingBox extends DynaBox(Vec(235, 30), 70f, 70f, box_mass = 1000f, restitution = false) {
+object WaitingBox extends DynaBox(Vec(270, 60), 100f, 60f, box_mass = 1000f, restitution = false) {
   render {
-    drawPolygon(points, WHITE)
+    drawPolygon(points, BLACK)
   }
 }

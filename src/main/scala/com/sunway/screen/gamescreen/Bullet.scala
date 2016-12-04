@@ -19,12 +19,12 @@ class Bullet(id: Int, init_coord: Vec, targetCoord: Vec) extends DynaBall(init_c
   val speedY = distanceY / time
   val deltaCoord = Vec(speedX, speedY)
 
-  init {
+  val bulletInit = init {
     coord = init_coord
     velocity_=(deltaCoord)
     val forceDeltaCoord = Vec(deltaCoord.x * 200, deltaCoord.y * 50)
     addForce(forceDeltaCoord)
-    this.body.addExcludedBody(charactersObj(id).body)
+    body.addExcludedBody(charactersObj(id).body)
     body.addExcludedBody(LevelDrawer.flag.body)
   }
 
@@ -33,7 +33,7 @@ class Bullet(id: Int, init_coord: Vec, targetCoord: Vec) extends DynaBall(init_c
     next_frame += 1
     if (next_frame >= ROCKET_ANIMATION.length) next_frame = 0
     if (this.isTouching) {
-      delOperations(bulletRender)
+      delOperations(bulletRender, bulletInit)
       deleteSelfNoWarn()
       physics.removePhysicals(this)
     }
@@ -47,7 +47,7 @@ class Bullet(id: Int, init_coord: Vec, targetCoord: Vec) extends DynaBall(init_c
   }
 
   clear {
-    delOperations(bulletRender, bulletFrame)
+    delOperations(bulletRender, bulletFrame, bulletInit)
     deleteSelfNoWarn()
   }
 

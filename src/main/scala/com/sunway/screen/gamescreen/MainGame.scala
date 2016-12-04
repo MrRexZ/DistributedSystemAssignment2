@@ -13,34 +13,25 @@ import com.sunway.network.actors.GameplayActorMessages._
   */
 object MainGame extends ScageScreen("Main Screen") {
 
-
   val physics = ScagePhysics(gravity = Vec(0, -50))
   private val log = MySimpleLogger(this.getClass.getName)
   private var uke_speed = 30
   private var farthest_coord = Vec.zero
   val MATCH_PROGRESS = 0
   val MATCH_END = 1
-
   var won = false
   var lost = false
   var winningPlayer: Option[Int] = None
   var goBack = false
 
-  def ukeSpeed = uke_speed
-
-  def setDefaultSpeed() {
-    uke_speed = 0
-  }
-
-  charactersObj(myRoomPos.string.toInt) = new Character(charactersPos(myRoomPos.string.toInt), myRoomPos.string.toInt)
-  val myChar = charactersObj(myRoomPos.string.toInt)
-
 
   preinit {
-    physics.addPhysical(myChar)
-    do {
-      Client.clientActor ! SendMyCharacterObject(myRoomPos.string.toInt, myChar.coord.x, myChar.coord.y)
-    } while (charactersObj(myRoomPos.string.toInt) == null)
+    try
+      charactersObj(myRoomPos.string.toInt) = new Character(charactersPos(myRoomPos.string.toInt), myRoomPos.string.toInt)
+    finally
+      Client.clientActor ! SendMyCharacterObject(myRoomPos.string.toInt, charactersObj(myRoomPos.string.toInt).coord.x, charactersObj(myRoomPos.string.toInt).coord.y)
+
+
   }
 
   action {
@@ -48,8 +39,8 @@ object MainGame extends ScageScreen("Main Screen") {
     if (oldPlayerLeave) delChar(oldPlayerPos.get)
   }
 
-
   def createChar: Unit = {
+    println("NEW CHARACTER JOINING")
     val newPlayerPost: Int = newPlayerPos.get
     charactersObj(newPlayerPost) = new Character(newPlayerVec, newPlayerPost)
     physics.addPhysical(charactersObj(newPlayerPost))
@@ -67,12 +58,10 @@ object MainGame extends ScageScreen("Main Screen") {
     lost = false
     goBack = false
     winningPlayer = None
-    pauseOff()
     backgroundColor = WHITE
     LevelDrawer.generatePlatformsInUser()
     val action_id = action {
       if (wonCondition) {
-        log.info("uke.velocity = " + myChar.velocity)
         won = true
         pause()
         deleteSelfNoWarn()
@@ -82,10 +71,8 @@ object MainGame extends ScageScreen("Main Screen") {
       delOperationNoWarn(action_id)
       deleteSelfNoWarn()
     }
-
     Unit
   }
-
   clear {
     physics.removeAll()
   }
@@ -94,13 +81,11 @@ object MainGame extends ScageScreen("Main Screen") {
     physics.step()
   }
 
-
   def wonCondition = {
-    myChar.isTouching(LevelDrawer.flag)
+    charactersObj(myRoomPos.string.toInt).isTouching(LevelDrawer.flag)
   }
 
-  center = myChar.coord
-
+  center = charactersObj(myRoomPos.string.toInt).coord
   interface {
         if (onPause) {
           if (won) {
@@ -122,26 +107,25 @@ object MainGame extends ScageScreen("Main Screen") {
     pauseOff()
   })
 
-  key(KEY_P, onKeyDown = {
-    goBackScreen(MATCH_PROGRESS)
-  })
-
+  /*  key(KEY_P, onKeyDown = {
+      goBackScreen(MATCH_PROGRESS)
+    })
+  */
   action {
     if (goBack) {
       goBackScreen(MATCH_END)
       goBack = false
     }
-    if (myChar.coord.y < -50) {
+    if (charactersObj(myRoomPos.string.toInt).coord.y < -50) {
       callEvent("RESET POS")
     }
-
   }
 
   onEvent("RESET POS") {
-    myChar.coord_=(Vec(20, windowHeight / 2 - 70))
-    myChar.velocity_=(Vec(0, 0))
-    myChar.body.setForce(0f, 0f)
-    Client.clientActor ! SendCoordinatesFromMe(myChar.body.getPosition.getX, myChar.body.getPosition.getY)
+    charactersObj(myRoomPos.string.toInt).coord_=(Vec(20, windowHeight / 2 - 70))
+    charactersObj(myRoomPos.string.toInt).velocity_=(Vec(0, 0))
+    charactersObj(myRoomPos.string.toInt).body.setForce(0f, 0f)
+    Client.clientActor ! SendCoordinatesFromMe(charactersObj(myRoomPos.string.toInt).body.getPosition.getX, charactersObj(myRoomPos.string.toInt).body.getPosition.getY)
   }
 
   private def goBackScreen(option: Int) {
@@ -149,8 +133,10 @@ object MainGame extends ScageScreen("Main Screen") {
 
     Client.clientActor ! ChangeMenuState(option)
     backgroundColor = BLACK
+    MainGame.lost = false
+    MainGame.won = false
+    winningPlayer = None
     MainGame.clear()
     MainGame.stop()
   }
-
 }
