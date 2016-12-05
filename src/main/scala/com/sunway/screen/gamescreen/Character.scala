@@ -12,10 +12,10 @@ import com.sunway.screen.menu.RoomMenu.{action => _, actionStaticPeriod => _, in
   * Created by Mr_RexZ on 11/24/2016.
   */
 class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, radius = 30, mass = 1.0f, false) {
-  val uke_stand_right = image("uke-stand.png", 45, 70, 121, 8, 125, 195)
-  val uke_stand_left = image("stay2.png", 45, 70, 11, 11, 128, 191)
-  val uke_animation_left = animation("uke.png", 56, 70, 160, 200, 6)
-  val uke_animation_right = animation("uke-animation.png", 56, 70, 160, 200, 6)
+  val char_stand_right = image("uke-stand.png", 45, 70, 121, 8, 125, 195)
+  val char_stand_left = image("stay2.png", 45, 70, 11, 11, 128, 191)
+  val char_animation_left = animation("uke.png", 56, 70, 160, 200, 6)
+  val char_animation_right = animation("uke-animation.png", 56, 70, 160, 200, 6)
 
   private val max_jump = 10
   private val max_jump2 = 10
@@ -173,8 +173,6 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
     if (isMyChar) {
       if (body.getVelocity.lengthSquared() != 0) callEvent(SEND_VELOCITY, (body.getVelocity.getX, body.getVelocity.getY, body.isResting))
       else if (body.getVelocity.lengthSquared() == 0) callEvent(SEND_COORDINATES)
-
-
     }
   }
 
@@ -184,7 +182,7 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
     if (frame >= 6) frame = 0
   }
 
-  val jumpAction = actionStaticPeriod(200) {
+  val jumpAction = actionStaticPeriod(100) {
     if (isTouching) {
       if (num_jump > 0) num_jump -= 1
       if (num_jump2 > 0) num_jump2 -= 1
@@ -194,14 +192,14 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
 
   val charRender = render(-2) {
     if (velocity.x > 0 && isTouching) {
-      drawDisplayList(uke_animation_right(frame), coord)
+      drawDisplayList(char_animation_right(frame), coord)
     }
     else if (velocity.x < 0 && isTouching) {
-      drawDisplayList(uke_animation_left(frame), coord)
+      drawDisplayList(char_animation_left(frame), coord)
     }
     else {
-      if (previousXSpeed < 0) drawDisplayList(uke_stand_left, coord)
-      else if (previousXSpeed >= 0) drawDisplayList(uke_stand_right, coord)
+      if (previousXSpeed < 0) drawDisplayList(char_stand_left, coord)
+      else if (previousXSpeed >= 0) drawDisplayList(char_stand_right, coord)
     }
 
     if (playerIsLeaving) {

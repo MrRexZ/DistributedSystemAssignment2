@@ -17,7 +17,7 @@ import scala.concurrent.duration._
 
 class HeartbeatActor(roomNum: Int, interval: Int, clientActors: ListBuffer[Option[ActorRef]]) extends Actor {
 
-  var schedulerList = Array.ofDim[Cancellable](maxPlayerInRoom)
+  private var schedulerList = Array.ofDim[Cancellable](maxPlayerInRoom)
 
   override def receive: Receive = receive(interval)
 

@@ -1,6 +1,6 @@
 package com.sunway.network
 
-import akka.actor.{ActorRef, ActorSystem, ExtendedActorSystem, Identify, Props}
+import akka.actor.{ActorRef, ActorSystem, Identify, Props}
 import akka.pattern.ask
 import akka.util.Timeout
 import com.github.dunnololda.scage.ScageScreenApp
@@ -24,7 +24,6 @@ object Client extends ScageScreenApp("Client App", 640, 480) {
 
   val clientSystem = ActorSystem("ClientSystem", ConfigFactory.load("client"))
 
-  println(clientSystem.asInstanceOf[ExtendedActorSystem].provider.getDefaultAddress.port)
 
   val serverPath = "akka.tcp://ServerSystem@127.0.0.1:2554/user/serverActorName"
   val actorServerSelect = clientSystem.actorSelection(serverPath)

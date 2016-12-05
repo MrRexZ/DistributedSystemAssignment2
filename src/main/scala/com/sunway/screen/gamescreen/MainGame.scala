@@ -15,7 +15,7 @@ object MainGame extends ScageScreen("Main Screen") {
 
   val physics = ScagePhysics(gravity = Vec(0, -50))
   private val log = MySimpleLogger(this.getClass.getName)
-  private var uke_speed = 30
+  private var char_speed = 30
   private var farthest_coord = Vec.zero
   val MATCH_PROGRESS = 0
   val MATCH_END = 1
@@ -90,16 +90,14 @@ object MainGame extends ScageScreen("Main Screen") {
   interface {
         if (onPause) {
           if (won) {
-            print("YOU WON!!", 20, windowHeight - 40)
+            print("YOU WON!!  PRESS ESC TO GO BACK!", 20, windowHeight - 40)
             Client.clientActor ! InformWinState()
             goBack = true
-            println("WINNER EXECUTED")
 
           }
           else if (lost) {
-            print(s"You lost, player ${winningPlayer.get} won", 20, windowHeight - 40)
+            print(s"You lost, player ${winningPlayer.get} won.  PRESS ESC TO GO BACK.", 20, windowHeight - 40)
             goBack = true
-            println("LOSER EXECUTED")
           }
         }
       }

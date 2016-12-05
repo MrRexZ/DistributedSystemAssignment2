@@ -11,21 +11,15 @@ import com.sunway.screen.gamescreen.MainGame._
 class Flag(val coordVec: Vec, box_width: Float, box_height: Float) extends DynaBox(coordVec, box_width = box_width, box_height = box_height, box_mass = 0.1f, false) {
   val flag = image("flags.png", box_width, box_height, 1, 20, 9, 12)
 
-  preinit {
-    velocity_=(Vec(0f, 0f))
-    body.setIsResting(true)
-    body.setMoveable(false)
-    body.setGravityEffected(false)
-    body.setMaxVelocity(0, 0)
-  }
 
-  action {
+  val flagAction = action {
     body.setPosition(coord.x, coord.y)
   }
 
 
-  render {
+  val flagRender = render {
     drawDisplayList(flag, coord)
   }
+
 
 }

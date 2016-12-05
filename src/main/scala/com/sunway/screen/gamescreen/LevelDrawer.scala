@@ -6,7 +6,6 @@ import com.sunway.model.User._
 import com.sunway.screen.gamescreen.MainGame._
 
 import scala.collection.mutable.{ArrayBuffer, ListBuffer}
-import scala.util.Random
 
 /**
   * Created by Mr_RexZ on 11/27/2016.
@@ -15,6 +14,9 @@ object LevelDrawer {
 
   private val platformArray = ArrayBuffer[Physical]()
   val flag = new Flag(Vec(-100, -100), 45, 70)
+  flag.body.setGravityEffected(false)
+  flag.body.setIsResting(true)
+  flag.body.setMoveable(false)
 
   def clearPlatform() {
     platformArray.clear()
@@ -37,9 +39,8 @@ object LevelDrawer {
 
     }
 
-    val randomIsland = Random.nextInt(mapInformation.head.size)
     for ((lastPoly, index) <- mapInformation.head.zipWithIndex) {
-      if (index == 3) {
+      if (index == 2) {
         createFlag(lastPoly._1, lastPoly._2)
       }
     }

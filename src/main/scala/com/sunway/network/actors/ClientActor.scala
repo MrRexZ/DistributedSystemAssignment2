@@ -179,7 +179,6 @@ class ClientActor extends Actor {
       roomStateSeenUser.string = "WAITING STATE"
       context.become(receive)
 
-      println("no people left : " + roomStateSeenUser.string)
       Client.actorServerSelect ! SendRoomState(self, targetRoomNum.string.toInt, myRoomPos.string.toInt, User.WAITING_STATE, " - WAITING")
 
       if (matchState == MainGame.MATCH_END || ifNoPeopleLeft) {
