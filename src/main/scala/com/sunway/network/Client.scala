@@ -18,7 +18,6 @@ import scala.concurrent.duration._
   */
 
 
-//TODO Assign each client with unique port number
 object Client extends ScageScreenApp("Client App", 640, 480) {
   implicit val timeout = Timeout(5.seconds)
 
@@ -28,7 +27,6 @@ object Client extends ScageScreenApp("Client App", 640, 480) {
   val serverPath = "akka.tcp://ServerSystem@127.0.0.1:2554/user/serverActorName"
   val actorServerSelect = clientSystem.actorSelection(serverPath)
 
-  //TODO identify message should be sent only when there is a process required
   actorServerSelect ! Identify(GET_REF_SERVER)
 
   var supervisorActor = clientSystem.actorOf(Props(classOf[SupervisorActor]), name = "Supervisor")

@@ -14,8 +14,6 @@ object Database {
   val clientRoomState = Map[Int, ListBuffer[Int]]()
   val roomIsPlaying = Map[Int, Boolean]()
   val temporaryMap = Map[Int, List[ArrayBuffer[Tuple2[Float, Float]]]]()
-
   var userNameToPassword = scala.collection.mutable.Map[String, String]()
   var heartBeatActorRef = Map[Int, ActorRef]()
-
 }

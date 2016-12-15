@@ -12,7 +12,7 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
   */
 object LevelDrawer {
 
-  private val platformArray = ArrayBuffer[Physical]()
+  val platformArray = ArrayBuffer[Physical]()
   val flag = new Flag(Vec(-100, -100), 45, 70)
   flag.body.setGravityEffected(false)
   flag.body.setIsResting(true)
@@ -39,7 +39,7 @@ object LevelDrawer {
 
     }
 
-    for ((lastPoly, index) <- mapInformation.head.zipWithIndex) {
+    for ((lastPoly, index) <- mapInformation.last.zipWithIndex) {
       if (index == 2) {
         createFlag(lastPoly._1, lastPoly._2)
       }

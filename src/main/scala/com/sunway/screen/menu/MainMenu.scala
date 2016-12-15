@@ -76,12 +76,10 @@ object MainMenu extends ScageScreen("Scage App") {
   def checkType[T: TypeTag](obj: T, serverReply: ServerReply) = {
     if (serverReply.isInstanceOf[RejectPlayer]) JOptionPane.showMessageDialog(null, serverReply.asInstanceOf[RejectPlayer].reason);
     else {
-
       if (serverReply.isInstanceOf[AcceptPlayerAsHost]) Client.clientActor ! serverReply.asInstanceOf[AcceptPlayerAsHost]
       else if (serverReply.isInstanceOf[AcceptPlayerAsParticipant]) Client.clientActor ! serverReply.asInstanceOf[AcceptPlayerAsParticipant]
       RoomMenu.run()
     }
-
   }
 
   def connectAsParticipant {

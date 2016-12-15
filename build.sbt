@@ -1,4 +1,4 @@
-name := "TestOnly"
+name := "DistributedSystemAssignment2"
 
 version := "1.0"
 

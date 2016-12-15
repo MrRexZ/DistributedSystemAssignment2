@@ -209,9 +209,9 @@ class ClientActor extends Actor {
     }
 
     case AskMyCharObject(clientRef) => {
-      do {
-        if (charactersObj(myRoomPos.string.toInt) != null) clientRef ! CreateCharacter(myRoomPos.string.toInt, charactersObj(myRoomPos.string.toInt).coord.x, charactersObj(myRoomPos.string.toInt).coord.y)
-      } while (charactersObj(myRoomPos.string.toInt) == null)
+      println("Being asked my char object!!")
+      if (charactersObj(myRoomPos.string.toInt) != null) clientRef ! CreateCharacter(myRoomPos.string.toInt, charactersObj(myRoomPos.string.toInt).coord.x, charactersObj(myRoomPos.string.toInt).coord.y)
+      else self ! AskMyCharObject(clientRef)
     }
 
     case SendMyCharacterObject(playerPos, x, y) => {

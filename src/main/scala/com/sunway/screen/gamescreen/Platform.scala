@@ -13,12 +13,22 @@ class Platform(platform_points: Vec*) extends StaticPolygon(platform_points: _*)
 
   init {
 
-    body.setRestitution(0f)
+    platform_points.foreach(point => tracer.addTrace(point, new Trace {
+      def state = State("type" -> "walls")
+
+      def changeState(changer: Trace, s: State) {
+      }
+    }))
   }
+
   private val render_id = render {
-    if (physics.containsPhysical(this)) drawPolygon(points, /*platform_color*/ BLACK)
+    if (physics.containsPhysical(this)) {
+      //  tracesList
+      // tracesList.foreach(trace => drawPolygon(trace.location))
+      //  drawTraceGrid(tracer, GRAY)
+      drawPolygon(points, /*platform_color*/ BLACK)
+    }
     else {
-      //println("youo")
       deleteSelfNoWarn()
     }
   }

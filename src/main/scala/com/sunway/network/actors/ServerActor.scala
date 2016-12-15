@@ -30,7 +30,6 @@ class ServerActor extends Actor {
       if (!userNameToPassword.contains(userName)) registerPlayer(userName, password, actorRef)
       if (!validUsers(userName, password)) sender ! RejectPlayer(" WRONG PASSWORD ")
       else {
-        //TODO uncomment this line later!!
         val roomNum = generateRoomNum()
 
         registerRoom(roomNum, actorRef)
@@ -51,7 +50,6 @@ class ServerActor extends Actor {
     }
 
 
-    //TODO send actorref to existing people too in here
     case SendRequestJoin(actorRef, roomNum, userName, password) => {
 
       if (!userNameToPassword.contains(userName)) registerPlayer(userName, password, actorRef)
@@ -119,16 +117,7 @@ class ServerActor extends Actor {
 
 
 
-    //TODO call this message below when update of a roomstate occurs
-    /*
-case UpdateClientRoomStateInServer(roomNum, roomPos, playerRoomState) => {
-  clientRoomState(roomNum).update(roomPos, playerRoomState)
-}
 
-case GetClientRoomStateInServer(roomNum, roomPos, playerRoomState) => {
-  sender ! clientRoomState(roomNum)
-}
-*/
 
     case BeAskedRoomIsPlaying(roomNum) => sender ! roomIsPlaying(roomNum)
 

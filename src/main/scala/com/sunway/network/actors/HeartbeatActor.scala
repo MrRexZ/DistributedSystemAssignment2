@@ -20,11 +20,9 @@ class HeartbeatActor(roomNum: Int, interval: Int, clientActors: ListBuffer[Optio
   private var schedulerList = Array.ofDim[Cancellable](maxPlayerInRoom)
 
   override def receive: Receive = receive(interval)
-
   override def preStart() {
     self ! StartMessage
   }
-
   def receive(interval: Int): Actor.Receive = {
     case StartMessage => context.system.scheduler.scheduleOnce(interval.milliseconds, self, HeartbeatMessage(HOST_ROOM_ID))
     case HeartbeatMessage(playerID) => {
@@ -32,12 +30,8 @@ class HeartbeatActor(roomNum: Int, interval: Int, clientActors: ListBuffer[Optio
     }
 
     case FrequencyChangeMessage(interval, clientActors) => context.become(receive(interval))
-
-
     case ActorIdentity(playerID, Some(actorRef)) => {
     }
-
-
     case ActorIdentity(playerID, None) => {
       schedulerList(playerID.toString.toInt).cancel()
       removeActor
@@ -65,12 +59,8 @@ class HeartbeatActor(roomNum: Int, interval: Int, clientActors: ListBuffer[Optio
 
       }
     }
-
     case _ => println("MESSAGE NOT DETECTED IN HEARTBEAT ACTOR?\n")
-
   }
-
-
 }
 
 object HeartbeatActor {

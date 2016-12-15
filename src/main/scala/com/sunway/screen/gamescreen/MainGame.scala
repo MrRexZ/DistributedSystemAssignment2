@@ -14,6 +14,7 @@ import com.sunway.network.actors.GameplayActorMessages._
 object MainGame extends ScageScreen("Main Screen") {
 
   val physics = ScagePhysics(gravity = Vec(0, -50))
+  val tracer = CoordTracer(solid_edges = false)
   private val log = MySimpleLogger(this.getClass.getName)
   private var char_speed = 30
   private var farthest_coord = Vec.zero

@@ -11,11 +11,11 @@ import com.sunway.screen.menu.RoomMenu.{action => _, actionStaticPeriod => _, in
 /**
   * Created by Mr_RexZ on 11/24/2016.
   */
-class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, radius = 30, mass = 1.0f, false) {
-  val char_stand_right = image("uke-stand.png", 45, 70, 121, 8, 125, 195)
-  val char_stand_left = image("stay2.png", 45, 70, 11, 11, 128, 191)
-  val char_animation_left = animation("uke.png", 56, 70, 160, 200, 6)
-  val char_animation_right = animation("uke-animation.png", 56, 70, 160, 200, 6)
+class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, radius = 30, mass = 1.0f, false) with MoveableObject {
+  val char_stand_right = image("char-stand-right.png", 45, 70, 121, 8, 125, 195)
+  val char_stand_left = image("char-stand-left.png", 45, 70, 11, 11, 128, 191)
+  val char_animation_left = animation("char-anim-left.png", 56, 70, 160, 200, 6)
+  val char_animation_right = animation("char-anim-right.png", 56, 70, 160, 200, 6)
 
   private val max_jump = 10
   private val max_jump2 = 10
@@ -42,10 +42,19 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
   var aBulletReceived = false
 
 
-  val initChar = init {
+  val trace = tracer.addTrace(windowCenter, new Trace {
+    def state = State("type" -> charID)
 
+    def changeState(changer: Trace, s: State) {
+      s.neededKeys {
+        case ("damage", (bulletID: Int, forceX: Float, forceY: Float)) => if (bulletID != charID) callEvent(SEND_FORCE, (forceX, forceY))
+      }
+    }
+  })
+
+  val initChar = init {
     coord_=(coordVec)
-    velocity_=(Vec(0, 0))
+    velocity = (Vec(0, 0))
     physics.addPhysical(this)
     if (isMyChar) registerController()
 
@@ -71,7 +80,7 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
 
     key(KEY_A, onKeyDown = {
       body.setIsResting(false)
-      callEvent(SEND_VELOCITY, (-60.toFloat, velocity.y, body.isResting))
+      velocity = (Vec(-60, velocity.y))
     },
       onKeyUp = {
         body.setIsResting(true)
@@ -81,7 +90,7 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
 
     key(KEY_D, onKeyDown = {
       body.setIsResting(false)
-      callEvent(SEND_VELOCITY, (60.toFloat, velocity.y, body.isResting))
+      velocity = (Vec(60, velocity.y))
     }, onKeyUp = {
       body.setIsResting(true)
       callEvent(FACE_RIGHT)
@@ -91,7 +100,7 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
 
     key(KEY_S, onKeyDown = {
       callEvent(SEND_FORCE, (0.toFloat, downward_force.toFloat))
-      callEvent(SEND_VELOCITY, (0.toFloat, velocity.y.toFloat, false))
+      velocity = (Vec(0, velocity.y))
     })
 
     key(KEY_X, onKeyDown = {
@@ -125,11 +134,13 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
 
     val sendVelocityEvent = onEventWithArguments(SEND_VELOCITY) {
       case (speedX: Float, speedY: Float, restingState: Boolean) => {
-        velocity_=(Vec(speedX, speedY))
+        velocity = (Vec(speedX, speedY))
         body.setIsResting(restingState)
         Client.clientActor ! SendVelocity(speedX, speedY, restingState)
       }
     }
+
+
 
     val faceLeftEvent = onEvent(FACE_LEFT) {
       previousXSpeed = -1
@@ -171,9 +182,21 @@ class Character(val coordVec: Vec, val charID: Int) extends DynaBall(coordVec, r
 
   val charTransAction = action {
     if (isMyChar) {
+      //    tracer.updateLocation(trace, trace.location + step)
       if (body.getVelocity.lengthSquared() != 0) callEvent(SEND_VELOCITY, (body.getVelocity.getX, body.getVelocity.getY, body.isResting))
       else if (body.getVelocity.lengthSquared() == 0) callEvent(SEND_COORDINATES)
     }
+    else {
+      if (body.isResting) callEvent("STOP")
+    }
+  }
+
+  onEvent("STOP") {
+    if (!isMyChar) {
+      body.setIsResting(true)
+      velocity = (Vec(0, velocity.y))
+    }
+    //  callEvent(SEND_VELOCITY, (0f, velocity.y, body.isResting))
   }
 
 

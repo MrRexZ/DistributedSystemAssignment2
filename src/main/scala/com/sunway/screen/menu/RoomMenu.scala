@@ -16,7 +16,6 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
   * Created by Mr_RexZ on 11/17/2016.
   */
 
-//TODO Player reference not assigned yet when player first time joining
 object RoomMenu extends ScageScreen("AnotherApp") {
   backgroundColor = BLACK
   val physics = ScagePhysics()

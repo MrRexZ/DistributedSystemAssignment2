@@ -20,7 +20,6 @@ object User {
   implicit val timeout = Timeout(5.seconds)
 
 
-  //TODO fix this as this is for debugging
   val targetRoomNum: MutableString = new MutableString("0")
   var myName: MutableString = new MutableString(System.getProperty("user.name"))
   var myRoomPos: MutableString = new MutableString("")
