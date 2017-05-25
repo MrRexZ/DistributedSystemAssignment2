@@ -4,13 +4,17 @@ Inspired by Temple Run, this multiplayer game features procedural generation of 
 Players are also capable of shooting bullet/rocket at each other using left mouse button, to which will cause the player to be pushed in the same direction as the bullet/rocket. 
 
 **Main Menu Screen :**
+
 ![Main Menu Screen](https://github.com/MrRexZ/DistributedSystemAssignment2/blob/master/demo/images/start_screen.PNG?raw=true)
 
 **Create Room : **
+
 ![Create Room](https://github.com/MrRexZ/DistributedSystemAssignment2/blob/master/demo/images/create_room.PNG?raw=true)
 
 **Join Room :** 
+
 ![Join Room](https://github.com/MrRexZ/DistributedSystemAssignment2/blob/master/demo/images/waiting_room.PNG?raw=true)
 
 **Gameplay :**
+
 ![Gameplay](https://github.com/MrRexZ/DistributedSystemAssignment2/blob/master/demo/images/gameplay.gif?raw=true)
