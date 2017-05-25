@@ -7,7 +7,7 @@ Players are also capable of shooting bullet/rocket at each other using left mous
 
 ![Main Menu Screen](https://github.com/MrRexZ/DistributedSystemAssignment2/blob/master/demo/images/start_screen.PNG?raw=true)
 
-**Create Room : **
+**Create Room :**
 
 ![Create Room](https://github.com/MrRexZ/DistributedSystemAssignment2/blob/master/demo/images/create_room.PNG?raw=true)
 
